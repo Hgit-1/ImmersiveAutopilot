@@ -40,7 +40,7 @@ public class RouteOfferScreen extends Screen {
 
     @Override
     public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics);
+        this.renderBackground(graphics, mouseX, mouseY, partialTick);
         graphics.drawCenteredString(this.font, title, this.width / 2, this.height / 2 - 30, 0xFFFFFF);
         graphics.drawCenteredString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_from")
                 .append(": ").append(operatorName), this.width / 2, this.height / 2 - 10, 0xFFFFFF);

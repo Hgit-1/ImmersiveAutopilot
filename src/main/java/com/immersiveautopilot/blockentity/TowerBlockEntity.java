@@ -3,6 +3,7 @@ package com.immersiveautopilot.blockentity;
 import com.immersiveautopilot.menu.TowerMenu;
 import com.immersiveautopilot.route.RouteProgram;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -94,8 +95,8 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
         tag.putInt("ScanRange", scanRange);
         if (boundAircraft != null) {
             tag.putUUID("BoundAircraft", boundAircraft);
@@ -113,8 +114,8 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
-    public void loadAdditional(CompoundTag tag) {
-        super.loadAdditional(tag);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
         scanRange = tag.getInt("ScanRange");
         if (tag.hasUUID("BoundAircraft")) {
             boundAircraft = tag.getUUID("BoundAircraft");

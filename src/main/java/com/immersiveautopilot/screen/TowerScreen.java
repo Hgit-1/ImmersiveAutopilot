@@ -248,7 +248,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
+        renderBackground(graphics, mouseX, mouseY, partialTick);
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF1E1E1E);
         graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFF, false);
 
@@ -266,6 +266,11 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+        // Background is drawn in render().
     }
 
     private void drawAircraftList(GuiGraphics graphics) {
