@@ -655,6 +655,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         program.addWaypoint(new RouteWaypoint(new net.minecraft.core.BlockPos(worldX, player.blockPosition().getY(), worldZ),
                 player.level().dimension().location(), speed, hold));
         activeRoute = program;
+        selectedPointIndex = activeRoute.getWaypoints().size() - 1;
     }
 
     private boolean isInsideGrid(double mouseX, double mouseY) {

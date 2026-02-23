@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import java.util.List;
 
@@ -55,17 +56,23 @@ public class RouteOfferScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(this.font, title, this.width / 2, this.height / 2 - 90, 0xFFFFFFFF);
+        int panelLeft = this.width / 2 - 140;
+        int panelRight = this.width / 2 + 140;
+        int panelTop = this.height / 2 - 100;
+        int panelBottom = this.height / 2 + 90;
+        graphics.fill(panelLeft, panelTop, panelRight, panelBottom, 0xCC101214);
+
+        graphics.drawCenteredString(this.font, title.copy().withStyle(ChatFormatting.BOLD), this.width / 2, this.height / 2 - 90, 0xFFFFFFFF);
         graphics.drawCenteredString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_from")
-                .append(": ").append(operatorName), this.width / 2, this.height / 2 - 70, 0xFFFFFFFF);
+                .append(": ").append(operatorName).withStyle(ChatFormatting.BOLD), this.width / 2, this.height / 2 - 70, 0xFFFFFFFF);
 
         int listX = this.width / 2 - 120;
         int listY = this.height / 2 - 50;
-        graphics.drawString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_primary"), listX, listY - 12, 0xFFFFFFFF, true);
-        graphics.drawString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_backup"), listX + 160, listY - 12, 0xFFFFFFFF, true);
+        graphics.drawString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_primary").withStyle(ChatFormatting.BOLD), listX, listY - 14, 0xFFFFFFFF, true);
+        graphics.drawString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_backup").withStyle(ChatFormatting.BOLD), listX + 160, listY - 14, 0xFFFFFFFF, true);
 
         for (int i = 0; i < entries.size(); i++) {
-            int y = listY + i * 12;
+            int y = listY + i * 14;
             int color = i == selectedPrimary ? 0xFFFF4040 : 0xFFFFFFFF;
             graphics.drawString(this.font, entries.get(i).name(), listX, y, color, true);
             int bColor = i == selectedBackup ? 0xFF4FC3F7 : 0xFFB0B0B0;
@@ -81,9 +88,9 @@ public class RouteOfferScreen extends Screen {
         int listX = this.width / 2 - 120;
         int listY = this.height / 2 - 50;
         int listWidth = 140;
-        int listHeight = entries.size() * 12;
+        int listHeight = entries.size() * 14;
         if (mouseX >= listX && mouseX <= listX + listWidth && mouseY >= listY && mouseY <= listY + listHeight) {
-            int index = (int) ((mouseY - listY) / 12);
+            int index = (int) ((mouseY - listY) / 14);
             if (index >= 0 && index < entries.size()) {
                 if (button == 0) {
                     selectedPrimary = index;
