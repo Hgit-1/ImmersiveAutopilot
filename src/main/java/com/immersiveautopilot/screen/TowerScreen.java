@@ -28,8 +28,9 @@ import java.util.List;
 import java.util.UUID;
 
 public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
-    private static final int ROWS = 6;
+    private static final int ROWS = 5;
     private static final int ROW_HEIGHT = 12;
+    private static final int LIST_Y_OFFSET = 70;
 
     private EditBox rangeField;
     private EditBox routeNameField;
@@ -107,11 +108,11 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
         addRenderableWidget(Button.builder(Component.literal("<"),
                 button -> prevPage())
-                .bounds(x + 10, y + 118, 20, 18).build());
+                .bounds(x + 10, y + 54, 20, 18).build());
 
         addRenderableWidget(Button.builder(Component.literal(">"),
                 button -> nextPage())
-                .bounds(x + 40, y + 118, 20, 18).build());
+                .bounds(x + 40, y + 54, 20, 18).build());
 
         NetworkHandler.sendToServer(new C2SRequestTowerState(menu.getPos()));
         refreshAircraftList();
@@ -275,8 +276,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private void drawAircraftList(GuiGraphics graphics) {
         int listX = leftPos + 10;
-        int listY = topPos + 72;
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), listX, topPos + 60, 0xA0A0A0, false);
+        int listY = topPos + LIST_Y_OFFSET;
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), listX, topPos + 58, 0xA0A0A0, false);
 
         int start = page * ROWS;
         for (int i = 0; i < ROWS; i++) {
@@ -308,7 +309,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int listX = leftPos + 10;
-        int listY = topPos + 72;
+        int listY = topPos + LIST_Y_OFFSET;
         int listWidth = 100;
         int listHeight = ROWS * ROW_HEIGHT;
         if (mouseX >= listX && mouseX <= listX + listWidth && mouseY >= listY && mouseY <= listY + listHeight) {
