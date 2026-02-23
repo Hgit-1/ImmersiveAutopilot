@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.immersiveautopilot.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "VehicleEntityRouteMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

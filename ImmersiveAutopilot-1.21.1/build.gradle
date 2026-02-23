@@ -1,0 +1,47 @@
+plugins {
+    id "java"
+    id "net.neoforged.moddev" version "1.0.21"
+}
+
+group = project.mod_group
+version = "${project.minecraft_version}-${project.mod_version}"
+
+base {
+    archivesName = project.mod_id
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://maven.neoforged.net/releases/" }
+    maven { url "https://maven.conczin.net/Artifacts" }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+}
+
+neoForge {
+    version = project.neoforge_version
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:${project.neoforge_version}"
+    implementation "net.conczin:immersive_aircraft:${project.immersive_aircraft_version}+neoforge"
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "mod_id", project.mod_id
+    inputs.property "mod_name", project.mod_name
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand(
+            "version": project.version,
+            "mod_id": project.mod_id,
+            "mod_name": project.mod_name
+        )
+    }
+}

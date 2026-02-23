@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "immersive_autopilot:block/tower" }
+  }
+}
