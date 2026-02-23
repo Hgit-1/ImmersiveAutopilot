@@ -24,3 +24,12 @@ jobs:
 
       - name: Build
         run: ./gradlew build
+
+      - name: Upload Mod Jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: immersive-autopilot-jar
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+            !build/libs/*-javadoc.jar
