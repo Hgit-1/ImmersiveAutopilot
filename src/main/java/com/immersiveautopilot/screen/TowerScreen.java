@@ -28,9 +28,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
-    private static final int ROWS = 5;
+    private static final int ROWS = 4;
     private static final int ROW_HEIGHT = 12;
-    private static final int LIST_Y_OFFSET = 92;
+    private static final int LIST_LABEL_Y = 100;
+    private static final int LIST_Y_OFFSET = 112;
     private static final int LEFT_X_OFFSET = 10;
     private static final int RIGHT_X_OFFSET = 130;
     private static final int RIGHT_BUTTON_WIDTH = 110;
@@ -62,61 +63,61 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int x = leftPos;
         int y = topPos;
 
-        rangeField = new EditBox(font, x + LEFT_X_OFFSET, y + 22, 60, 16, Component.translatable("screen.immersive_autopilot.scan_range"));
+        rangeField = new EditBox(font, x + LEFT_X_OFFSET, y + 28, 60, 16, Component.translatable("screen.immersive_autopilot.scan_range"));
         rangeField.setValue("256");
         addRenderableWidget(rangeField);
 
-        routeNameField = new EditBox(font, x + RIGHT_X_OFFSET, y + 22, 100, 16, Component.translatable("screen.immersive_autopilot.route_name"));
+        routeNameField = new EditBox(font, x + RIGHT_X_OFFSET, y + 28, 100, 16, Component.translatable("screen.immersive_autopilot.route_name"));
         routeNameField.setValue(activeRoute.getName().isEmpty() ? "default" : activeRoute.getName());
         addRenderableWidget(routeNameField);
 
-        speedField = new EditBox(font, x + RIGHT_X_OFFSET, y + 44, 45, 16, Component.translatable("screen.immersive_autopilot.speed"));
+        speedField = new EditBox(font, x + RIGHT_X_OFFSET, y + 58, 45, 16, Component.translatable("screen.immersive_autopilot.speed"));
         speedField.setValue("1.0");
         addRenderableWidget(speedField);
 
-        holdField = new EditBox(font, x + RIGHT_X_OFFSET + 55, y + 44, 45, 16, Component.translatable("screen.immersive_autopilot.hold"));
+        holdField = new EditBox(font, x + RIGHT_X_OFFSET + 55, y + 58, 45, 16, Component.translatable("screen.immersive_autopilot.hold"));
         holdField.setValue("0");
         addRenderableWidget(holdField);
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.refresh_list"),
                 button -> refreshAircraftList())
-                .bounds(x + LEFT_X_OFFSET, y + 44, 90, 18).build());
+                .bounds(x + LEFT_X_OFFSET, y + 58, 90, 18).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.bind_selected"),
                 button -> bindSelected())
-                .bounds(x + LEFT_X_OFFSET, y + 170, 110, 18).build());
+                .bounds(x + LEFT_X_OFFSET, y + 170, 110, BUTTON_HEIGHT).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.unbind"),
                 button -> unbind())
-                .bounds(x + RIGHT_X_OFFSET, y + 156, 70, BUTTON_HEIGHT).build());
+                .bounds(x + LEFT_X_OFFSET, y + 192, 110, BUTTON_HEIGHT).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.add_waypoint"),
                 button -> addWaypoint())
-                .bounds(x + RIGHT_X_OFFSET, y + 70, 110, 18).build());
+                .bounds(x + RIGHT_X_OFFSET, y + 88, 110, BUTTON_HEIGHT).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.remove_waypoint"),
                 button -> removeWaypoint())
-                .bounds(x + RIGHT_X_OFFSET, y + 92, 110, 18).build());
+                .bounds(x + RIGHT_X_OFFSET, y + 112, 110, BUTTON_HEIGHT).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.save_preset"),
                 button -> savePreset())
-                .bounds(x + RIGHT_X_OFFSET, y + 114, 110, 18).build());
+                .bounds(x + RIGHT_X_OFFSET, y + 136, 110, BUTTON_HEIGHT).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.load_preset"),
                 button -> loadPreset())
-                .bounds(x + RIGHT_X_OFFSET, y + 136, 110, 18).build());
+                .bounds(x + RIGHT_X_OFFSET, y + 160, 110, BUTTON_HEIGHT).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.send_route"),
                 button -> sendRoute())
-                .bounds(x + RIGHT_X_OFFSET, y + 182, RIGHT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
+                .bounds(x + RIGHT_X_OFFSET, y + 192, RIGHT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         addRenderableWidget(Button.builder(Component.literal("<"),
                 button -> prevPage())
-                .bounds(x + LEFT_X_OFFSET, y + 70, 20, 18).build());
+                .bounds(x + LEFT_X_OFFSET, y + 86, 20, BUTTON_HEIGHT).build());
 
         addRenderableWidget(Button.builder(Component.literal(">"),
                 button -> nextPage())
-                .bounds(x + LEFT_X_OFFSET + 30, y + 70, 20, 18).build());
+                .bounds(x + LEFT_X_OFFSET + 30, y + 86, 20, BUTTON_HEIGHT).build());
 
         NetworkHandler.sendToServer(new C2SRequestTowerState(menu.getPos()));
         refreshAircraftList();
@@ -257,14 +258,14 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xF0121418);
         graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFF, false);
 
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.scan_range"), leftPos + LEFT_X_OFFSET, topPos + 12, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.route_name"), leftPos + RIGHT_X_OFFSET, topPos + 12, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.speed"), leftPos + RIGHT_X_OFFSET, topPos + 36, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.hold"), leftPos + RIGHT_X_OFFSET + 55, topPos + 36, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.scan_range"), leftPos + LEFT_X_OFFSET, topPos + 16, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.route_name"), leftPos + RIGHT_X_OFFSET, topPos + 16, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.speed"), leftPos + RIGHT_X_OFFSET, topPos + 46, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.hold"), leftPos + RIGHT_X_OFFSET + 55, topPos + 46, 0xFFFFFF, false);
 
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.bound_aircraft"), leftPos + LEFT_X_OFFSET, topPos + 150, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.bound_aircraft"), leftPos + LEFT_X_OFFSET, topPos + 154, 0xFFFFFF, false);
         String boundText = boundName == null || boundName.isBlank() ? Component.translatable("screen.immersive_autopilot.no_bound_aircraft").getString() : boundName;
-        graphics.drawString(font, boundText, leftPos + LEFT_X_OFFSET, topPos + 162, 0xFFFFFF, false);
+        graphics.drawString(font, boundText, leftPos + LEFT_X_OFFSET, topPos + 166, 0xFFFFFF, false);
 
         drawAircraftList(graphics);
         drawRouteList(graphics);
@@ -281,7 +282,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private void drawAircraftList(GuiGraphics graphics) {
         int listX = leftPos + LEFT_X_OFFSET;
         int listY = topPos + LIST_Y_OFFSET;
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), listX, topPos + 58, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), listX, topPos + LIST_LABEL_Y, 0xFFFFFF, false);
 
         int start = page * ROWS;
         for (int i = 0; i < ROWS; i++) {
@@ -299,8 +300,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private void drawRouteList(GuiGraphics graphics) {
         int listX = leftPos + RIGHT_X_OFFSET;
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), listX, topPos + 60, 0xFFFFFF, false);
-        int listY = topPos + 60 + 14;
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), listX, topPos + 78, 0xFFFFFF, false);
+        int listY = topPos + 78 + 14;
         List<RouteWaypoint> points = activeRoute.getWaypoints();
         int max = Math.min(points.size(), 6);
         for (int i = 0; i < max; i++) {
@@ -319,7 +320,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int listX = leftPos + LEFT_X_OFFSET;
         int listY = topPos + LIST_Y_OFFSET;
-        int listWidth = 100;
+        int listWidth = 110;
         int listHeight = ROWS * ROW_HEIGHT;
         if (mouseX >= listX && mouseX <= listX + listWidth && mouseY >= listY && mouseY <= listY + listHeight) {
             int index = (int) ((mouseY - listY) / ROW_HEIGHT) + page * ROWS;
