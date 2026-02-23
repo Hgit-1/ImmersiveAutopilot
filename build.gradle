@@ -14,6 +14,7 @@ repositories {
     mavenCentral()
     maven { url "https://maven.neoforged.net/releases/" }
     maven { url "https://maven.conczin.net/Artifacts" }
+    maven { url "https://maven.blamejared.com" }
 }
 
 java {
