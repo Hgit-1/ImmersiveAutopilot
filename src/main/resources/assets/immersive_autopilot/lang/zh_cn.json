@@ -38,5 +38,7 @@
   "screen.immersive_autopilot.route_offer_accept": "接受",
   "screen.immersive_autopilot.route_offer_decline": "拒绝",
   "screen.immersive_autopilot.route_offer_from": "来自",
-  "screen.immersive_autopilot.route_offer_points": "航点数量"
+  "screen.immersive_autopilot.route_offer_points": "航点数量",
+  "screen.immersive_autopilot.route_offer_primary": "主航路",
+  "screen.immersive_autopilot.route_offer_backup": "备用航路"
 }

@@ -2,8 +2,11 @@ package com.immersiveautopilot.blockentity;
 
 import com.immersiveautopilot.menu.TowerMenu;
 import com.immersiveautopilot.route.RouteProgram;
+import com.immersiveautopilot.config.WorldConfig;
+import com.immersiveautopilot.config.WorldConfigData;
 import com.immersiveautopilot.network.RouteOfferManager;
 import com.immersiveautopilot.network.S2CRouteOfferToPilot;
+import com.immersiveautopilot.route.RouteEntry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -25,6 +28,7 @@ import immersive_aircraft.entity.VehicleEntity;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,6 +37,7 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     public static final int MAX_SCAN_RANGE = 1024;
 
     private int scanRange = DEFAULT_SCAN_RANGE;
+    private WorldConfigData worldConfig;
     private UUID boundAircraft;
     private String towerName = "default_tower";
     private String autoRequestText = "Auto request from {tower}";
@@ -48,12 +53,28 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         super(ModBlockEntities.TOWER.get(), pos, state);
     }
 
+    private WorldConfigData getWorldConfig() {
+        if (worldConfig != null) {
+            return worldConfig;
+        }
+        if (level instanceof ServerLevel serverLevel) {
+            worldConfig = WorldConfig.get(serverLevel);
+        }
+        return worldConfig;
+    }
+
     public int getScanRange() {
         return scanRange;
     }
 
     public void setScanRange(int scanRange) {
-        int clamped = Math.max(1, Math.min(MAX_SCAN_RANGE, scanRange));
+        int max = MAX_SCAN_RANGE;
+        int min = 1;
+        WorldConfigData config = getWorldConfig();
+        if (config != null) {
+            max = config.maxScanRange;
+        }
+        int clamped = Math.max(min, Math.min(max, scanRange));
         if (this.scanRange != clamped) {
             this.scanRange = clamped;
             setChanged();
@@ -155,6 +176,12 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         if (level == null) {
             return;
         }
+        if (worldConfig == null && level instanceof ServerLevel serverLevel) {
+            worldConfig = WorldConfig.get(serverLevel);
+            if (scanRange == DEFAULT_SCAN_RANGE) {
+                scanRange = worldConfig.defaultScanRange;
+            }
+        }
         boolean powered = isPowered();
         if (!powered) {
             if (wasPowered) {
@@ -165,32 +192,41 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         }
         if (!wasPowered) {
             wasPowered = true;
-            sendAutoRequests();
+            for (UUID uuid : sendAutoRequests()) {
+                insideAirspace.put(uuid, true);
+            }
         }
         handleAirspaceMessages();
     }
 
-    private void sendAutoRequests() {
+    private java.util.Set<UUID> sendAutoRequests() {
+        java.util.Set<UUID> seen = new java.util.HashSet<>();
         if (level == null) {
-            return;
+            return seen;
         }
+        List<RouteEntry> entries = getRouteEntries();
         for (VehicleEntity vehicle : getTargetsInRange()) {
+            seen.add(vehicle.getUUID());
             if (vehicle.getControllingPassenger() instanceof ServerPlayer pilot) {
-                RouteOfferManager.createOffer(pilot.getUUID(), null, vehicle.getId(), activeRoute, level.getGameTime());
-                immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
-                        new S2CRouteOfferToPilot(vehicle.getId(), towerName, activeRoute), pilot);
+                if (!entries.isEmpty()) {
+                    RouteOfferManager.createOffer(pilot.getUUID(), null, vehicle.getId(), entries, level.getGameTime());
+                    immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
+                            new S2CRouteOfferToPilot(vehicle.getId(), towerName, entries), pilot);
+                }
                 String msg = formatText(autoRequestText);
                 if (!msg.isBlank()) {
                     pilot.displayClientMessage(Component.literal(msg), false);
                 }
             }
         }
+        return seen;
     }
 
     private void handleAirspaceMessages() {
         if (level == null) {
             return;
         }
+        List<RouteEntry> entries = getRouteEntries();
         HashSet<UUID> current = new HashSet<>();
         for (VehicleEntity vehicle : getTargetsInRange()) {
             current.add(vehicle.getUUID());
@@ -199,6 +235,11 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
                     String msg = formatText(enterText);
                     if (!msg.isBlank()) {
                         pilot.displayClientMessage(Component.literal(msg), false);
+                    }
+                    if (!entries.isEmpty()) {
+                        RouteOfferManager.createOffer(pilot.getUUID(), null, vehicle.getId(), entries, level.getGameTime());
+                        immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
+                                new S2CRouteOfferToPilot(vehicle.getId(), towerName, entries), pilot);
                     }
                 }
                 insideAirspace.put(vehicle.getUUID(), true);
@@ -245,6 +286,18 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     private String formatText(String raw) {
         String base = raw == null ? "" : raw;
         return base.replace("{tower}", towerName);
+    }
+
+    private List<RouteEntry> getRouteEntries() {
+        List<RouteEntry> entries = new java.util.ArrayList<>();
+        for (Map.Entry<String, RouteProgram> entry : presets.entrySet()) {
+            entries.add(new RouteEntry(entry.getKey(), entry.getValue()));
+        }
+        boolean hasActive = presets.containsKey(activeRoute.getName());
+        if (!hasActive && activeRoute != null) {
+            entries.add(new RouteEntry(activeRoute.getName(), activeRoute));
+        }
+        return entries;
     }
 
     @Override

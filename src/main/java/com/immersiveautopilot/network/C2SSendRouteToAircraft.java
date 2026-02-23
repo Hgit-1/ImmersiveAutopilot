@@ -68,8 +68,10 @@ public class C2SSendRouteToAircraft extends Message {
             return;
         }
 
-        RouteOfferManager.createOffer(pilotPlayer.getUUID(), player.getUUID(), vehicle.getId(), program, level.getGameTime());
-        immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(new S2CRouteOfferToPilot(vehicle.getId(), player.getName().getString(), program), pilotPlayer);
+        java.util.List<com.immersiveautopilot.route.RouteEntry> entries = new java.util.ArrayList<>();
+        entries.add(new com.immersiveautopilot.route.RouteEntry(program.getName(), program));
+        RouteOfferManager.createOffer(pilotPlayer.getUUID(), player.getUUID(), vehicle.getId(), entries, level.getGameTime());
+        immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(new S2CRouteOfferToPilot(vehicle.getId(), player.getName().getString(), entries), pilotPlayer);
         S2CRouteResultToOperator.sendToPlayer(player, RouteResultType.SENT);
     }
 

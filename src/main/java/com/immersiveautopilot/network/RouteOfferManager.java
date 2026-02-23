@@ -1,10 +1,11 @@
 package com.immersiveautopilot.network;
 
-import com.immersiveautopilot.route.RouteProgram;
+import com.immersiveautopilot.route.RouteEntry;
 
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 
 public final class RouteOfferManager {
     private static final Map<UUID, PendingRouteOffer> OFFERS = new ConcurrentHashMap<>();
@@ -13,9 +14,9 @@ public final class RouteOfferManager {
     private RouteOfferManager() {
     }
 
-    public static void createOffer(UUID pilotUuid, UUID operatorUuid, int vehicleId, RouteProgram program, long currentTick) {
+    public static void createOffer(UUID pilotUuid, UUID operatorUuid, int vehicleId, List<RouteEntry> entries, long currentTick) {
         long expiresAt = currentTick + OFFER_LIFETIME_TICKS;
-        OFFERS.put(pilotUuid, new PendingRouteOffer(pilotUuid, operatorUuid, vehicleId, program, expiresAt));
+        OFFERS.put(pilotUuid, new PendingRouteOffer(pilotUuid, operatorUuid, vehicleId, entries, expiresAt));
     }
 
     public static PendingRouteOffer getOffer(UUID pilotUuid) {

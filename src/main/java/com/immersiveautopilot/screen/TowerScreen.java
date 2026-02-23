@@ -24,6 +24,9 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,14 +34,14 @@ import java.util.UUID;
 
 public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private static final int ROWS = 4;
-    private static final int ROW_HEIGHT = 12;
+    private static final int ROW_HEIGHT = 14;
 
     private static final int LEFT_X = 12;
     private static final int RIGHT_X = 170;
 
     private static final int GRID_SIZE = 128;
     private static final int GRID_X = RIGHT_X;
-    private static final int GRID_Y = 182;
+    private static final int GRID_Y = 196;
 
     private EditBox towerNameField;
     private EditBox rangeField;
@@ -62,6 +65,13 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private int gridCenterX;
     private int gridCenterZ;
+    private ResourceLocation gridDimension;
+    private int[][] mapColors = new int[GRID_SIZE][GRID_SIZE];
+    private boolean mapDirty = true;
+    private int lastMapCenterX;
+    private int lastMapCenterZ;
+    private int selectedPointIndex = -1;
+    private int hoverPointIndex = -1;
     private boolean draggingGrid = false;
     private double dragStartX;
     private double dragStartY;
@@ -82,91 +92,92 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int x = leftPos;
         int y = topPos;
 
-        towerNameField = new EditBox(font, x + LEFT_X, y + 24, 120, 16, Component.translatable("screen.immersive_autopilot.tower_name"));
+        towerNameField = new EditBox(font, x + LEFT_X, y + 28, 120, 16, Component.translatable("screen.immersive_autopilot.tower_name"));
         towerNameField.setValue("default_tower");
         addRenderableWidget(towerNameField);
 
-        rangeField = new EditBox(font, x + LEFT_X, y + 50, 60, 16, Component.translatable("screen.immersive_autopilot.scan_range"));
+        rangeField = new EditBox(font, x + LEFT_X, y + 60, 60, 16, Component.translatable("screen.immersive_autopilot.scan_range"));
         rangeField.setValue("256");
         addRenderableWidget(rangeField);
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.refresh_list"),
                 button -> refreshAircraftList())
-                .bounds(x + LEFT_X + 70, y + 50, 62, 16).build());
+                .bounds(x + LEFT_X + 70, y + 60, 62, 16).build());
 
         addRenderableWidget(Button.builder(Component.literal("<"),
                 button -> prevPage())
-                .bounds(x + LEFT_X, y + 72, 22, 16).build());
+                .bounds(x + LEFT_X, y + 86, 22, 16).build());
 
         addRenderableWidget(Button.builder(Component.literal(">"),
                 button -> nextPage())
-                .bounds(x + LEFT_X + 28, y + 72, 22, 16).build());
+                .bounds(x + LEFT_X + 28, y + 86, 22, 16).build());
 
-        routeNameField = new EditBox(font, x + RIGHT_X, y + 24, 120, 16, Component.translatable("screen.immersive_autopilot.route_name"));
+        routeNameField = new EditBox(font, x + RIGHT_X, y + 28, 120, 16, Component.translatable("screen.immersive_autopilot.route_name"));
         routeNameField.setValue(activeRoute.getName().isEmpty() ? "default" : activeRoute.getName());
         addRenderableWidget(routeNameField);
 
-        speedField = new EditBox(font, x + RIGHT_X, y + 50, 50, 16, Component.translatable("screen.immersive_autopilot.speed"));
+        speedField = new EditBox(font, x + RIGHT_X, y + 60, 50, 16, Component.translatable("screen.immersive_autopilot.speed"));
         speedField.setValue("1.0");
         addRenderableWidget(speedField);
 
-        holdField = new EditBox(font, x + RIGHT_X + 60, y + 50, 50, 16, Component.translatable("screen.immersive_autopilot.hold"));
+        holdField = new EditBox(font, x + RIGHT_X + 60, y + 60, 50, 16, Component.translatable("screen.immersive_autopilot.hold"));
         holdField.setValue("0");
         addRenderableWidget(holdField);
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.add_waypoint"),
                 button -> addWaypoint())
-                .bounds(x + RIGHT_X, y + 74, 120, 18).build());
+                .bounds(x + RIGHT_X, y + 92, 120, 18).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.remove_waypoint"),
                 button -> removeWaypoint())
-                .bounds(x + RIGHT_X, y + 96, 120, 18).build());
+                .bounds(x + RIGHT_X, y + 116, 120, 18).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.save_preset"),
                 button -> savePreset())
-                .bounds(x + RIGHT_X, y + 118, 120, 18).build());
+                .bounds(x + RIGHT_X, y + 140, 120, 18).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.load_preset"),
                 button -> loadPreset())
-                .bounds(x + RIGHT_X, y + 140, 120, 18).build());
+                .bounds(x + RIGHT_X, y + 164, 120, 18).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.send_route"),
                 button -> sendRoute())
-                .bounds(x + RIGHT_X, y + 162, 120, 18).build());
+                .bounds(x + RIGHT_X, y + 176, 120, 18).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.bind_selected"),
                 button -> bindSelected())
-                .bounds(x + LEFT_X, y + 212, 120, 18).build());
+                .bounds(x + LEFT_X, y + 220, 120, 20).build());
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.unbind"),
                 button -> unbind())
-                .bounds(x + LEFT_X, y + 234, 120, 18).build());
+                .bounds(x + LEFT_X, y + 246, 120, 20).build());
 
         targetModeButton = Button.builder(Component.translatable("screen.immersive_autopilot.target_mode_bound"),
                 button -> toggleTargetMode())
-                .bounds(x + LEFT_X, y + 256, 120, 18).build();
+                .bounds(x + LEFT_X, y + 272, 120, 20).build();
         addRenderableWidget(targetModeButton);
 
-        autoRequestField = new EditBox(font, x + LEFT_X, y + 328, 296, 16, Component.translatable("screen.immersive_autopilot.auto_request"));
+        autoRequestField = new EditBox(font, x + LEFT_X, y + 334, 296, 16, Component.translatable("screen.immersive_autopilot.auto_request"));
         autoRequestField.setValue("Auto request from {tower}");
         addRenderableWidget(autoRequestField);
 
-        enterField = new EditBox(font, x + LEFT_X, y + 350, 296, 16, Component.translatable("screen.immersive_autopilot.enter_text"));
+        enterField = new EditBox(font, x + LEFT_X, y + 356, 296, 16, Component.translatable("screen.immersive_autopilot.enter_text"));
         enterField.setValue("Entering {tower}");
         addRenderableWidget(enterField);
 
-        exitField = new EditBox(font, x + LEFT_X, y + 372, 296, 16, Component.translatable("screen.immersive_autopilot.exit_text"));
+        exitField = new EditBox(font, x + LEFT_X, y + 378, 296, 16, Component.translatable("screen.immersive_autopilot.exit_text"));
         exitField.setValue("Leaving {tower}");
         addRenderableWidget(exitField);
 
         addRenderableWidget(Button.builder(Component.translatable("screen.immersive_autopilot.apply_config"),
                 button -> applyConfig())
-                .bounds(x + LEFT_X, y + 276, 120, 16).build());
+                .bounds(x + LEFT_X, y + 300, 120, 18).build());
 
         Player player = Minecraft.getInstance().player;
         if (player != null) {
-            gridCenterX = player.blockPosition().getX();
-            gridCenterZ = player.blockPosition().getZ();
+            gridCenterX = menu.getPos().getX();
+            gridCenterZ = menu.getPos().getZ();
+            gridDimension = player.level().dimension().location();
         }
 
         NetworkHandler.sendToServer(new C2SRequestTowerState(menu.getPos()));
@@ -279,7 +290,11 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         if (name == null || name.isBlank()) {
             name = "default";
         }
-        return new RouteProgram(name, new ArrayList<>(activeRoute.getWaypoints()));
+        RouteProgram program = new RouteProgram(name, new ArrayList<>(activeRoute.getWaypoints()));
+        for (com.immersiveautopilot.route.RouteLink link : activeRoute.getLinks()) {
+            program.addLink(link.from(), link.to());
+        }
+        return program;
     }
 
     private void prevPage() {
@@ -347,31 +362,41 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics, mouseX, mouseY, partialTick);
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xF0121418);
-        graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFF, false);
+        graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFFFF, true);
 
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.tower_name"), leftPos + LEFT_X, topPos + 12, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.scan_range"), leftPos + LEFT_X, topPos + 38, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.route_name"), leftPos + RIGHT_X, topPos + 12, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.speed"), leftPos + RIGHT_X, topPos + 38, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.hold"), leftPos + RIGHT_X + 60, topPos + 38, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.tower_name"), leftPos + LEFT_X, topPos + 12, 0xFFFFFFFF, true);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.scan_range"), leftPos + LEFT_X, topPos + 46, 0xFFFFFFFF, true);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.route_name"), leftPos + RIGHT_X, topPos + 12, 0xFFFFFFFF, true);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.speed"), leftPos + RIGHT_X, topPos + 46, 0xFFFFFFFF, true);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.hold"), leftPos + RIGHT_X + 60, topPos + 46, 0xFFFFFFFF, true);
 
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), leftPos + LEFT_X, topPos + 92, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), leftPos + RIGHT_X, topPos + 92, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), leftPos + LEFT_X, topPos + 104, 0xFFFFFFFF, true);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), leftPos + RIGHT_X, topPos + 104, 0xFFFFFFFF, true);
 
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.bound_aircraft"), leftPos + LEFT_X, topPos + 196, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.bound_aircraft"), leftPos + LEFT_X, topPos + 202, 0xFFFFFFFF, true);
         String boundText = boundName == null || boundName.isBlank() ? Component.translatable("screen.immersive_autopilot.no_bound_aircraft").getString() : boundName;
-        graphics.drawString(font, boundText, leftPos + LEFT_X, topPos + 206, 0xFFFFFF, false);
+        graphics.drawString(font, boundText, leftPos + LEFT_X, topPos + 214, 0xFFFFFFFF, true);
 
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.auto_request"), leftPos + LEFT_X, topPos + 316, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.enter_text"), leftPos + LEFT_X, topPos + 338, 0xFFFFFF, false);
-        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.exit_text"), leftPos + LEFT_X, topPos + 360, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.auto_request"), leftPos + LEFT_X, topPos + 322, 0xFFFFFFFF, true);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.enter_text"), leftPos + LEFT_X, topPos + 346, 0xFFFFFFFF, true);
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.exit_text"), leftPos + LEFT_X, topPos + 370, 0xFFFFFFFF, true);
 
         drawAircraftList(graphics);
         drawRouteList(graphics);
         drawGrid(graphics);
+        drawHoverCoords(graphics, mouseX, mouseY);
 
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private void drawHoverCoords(GuiGraphics graphics, int mouseX, int mouseY) {
+        hoverPointIndex = findPointIndexAt(mouseX, mouseY);
+        if (hoverPointIndex >= 0) {
+            RouteWaypoint wp = activeRoute.getWaypoints().get(hoverPointIndex);
+            String text = wp.getPos().getX() + ", " + wp.getPos().getY() + ", " + wp.getPos().getZ();
+            graphics.drawString(font, text, mouseX + 8, mouseY + 8, 0xFFFFFFFF, true);
+        }
     }
 
     @Override
@@ -386,7 +411,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private void drawAircraftList(GuiGraphics graphics) {
         int listX = leftPos + LEFT_X;
-        int listY = topPos + 112;
+        int listY = topPos + 122;
 
         int start = page * ROWS;
         for (int i = 0; i < ROWS; i++) {
@@ -396,21 +421,21 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 continue;
             }
             AircraftSnapshot snapshot = aircraft.get(index);
-            int color = index == selectedIndex ? 0xFFFFA000 : 0xFFE0E0E0;
+            int color = index == selectedIndex ? 0xFFFFC04D : 0xFFFFFFFF;
             String line = snapshot.getName() + " [" + (int) snapshot.getDistance() + "m]";
-            graphics.drawString(font, line, listX, y, color, false);
+            graphics.drawString(font, line, listX, y, color, true);
         }
     }
 
     private void drawRouteList(GuiGraphics graphics) {
         int listX = leftPos + RIGHT_X;
-        int listY = topPos + 112;
+        int listY = topPos + 122;
         List<RouteWaypoint> points = activeRoute.getWaypoints();
         int max = Math.min(points.size(), 4);
         for (int i = 0; i < max; i++) {
             RouteWaypoint wp = points.get(i);
             String line = (i + 1) + ": " + wp.getPos().getX() + "," + wp.getPos().getZ();
-            graphics.drawString(font, line, listX, listY + i * ROW_HEIGHT, 0xFFE0E0E0, false);
+            graphics.drawString(font, line, listX, listY + i * ROW_HEIGHT, 0xFFFFFFFF, true);
         }
     }
 
@@ -420,24 +445,45 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int x1 = x0 + GRID_SIZE;
         int y1 = y0 + GRID_SIZE;
 
-        graphics.fill(x0, y0, x1, y1, 0xFF0E0F12);
-        for (int i = 0; i <= GRID_SIZE; i += 16) {
-            graphics.hLine(x0, x1, y0 + i, 0xFF22262B);
-            graphics.vLine(x0 + i, y0, y1, 0xFF22262B);
-        }
-        graphics.hLine(x0, x1, y0 + GRID_SIZE / 2, 0xFF2F343A);
-        graphics.vLine(x0 + GRID_SIZE / 2, y0, y1, 0xFF2F343A);
-
         Player player = Minecraft.getInstance().player;
         if (player == null) {
             return;
         }
         Level level = player.level();
+        updateMapCache(level);
+
+        for (int dz = 0; dz < GRID_SIZE; dz++) {
+            for (int dx = 0; dx < GRID_SIZE; dx++) {
+                int color = mapColors[dx][dz];
+                graphics.fill(x0 + dx, y0 + dz, x0 + dx + 1, y0 + dz + 1, color);
+            }
+        }
+
+        for (int i = 0; i <= GRID_SIZE; i += 16) {
+            graphics.hLine(x0, x1, y0 + i, 0x5522262B);
+            graphics.vLine(x0 + i, y0, y1, 0x5522262B);
+        }
+        graphics.hLine(x0, x1, y0 + GRID_SIZE / 2, 0xFF2F343A);
+        graphics.vLine(x0 + GRID_SIZE / 2, y0, y1, 0xFF2F343A);
         List<RouteWaypoint> points = activeRoute.getWaypoints();
-        int lastPx = 0;
-        int lastPz = 0;
-        boolean hasLast = false;
-        for (RouteWaypoint wp : points) {
+        for (com.immersiveautopilot.route.RouteLink link : activeRoute.getLinks()) {
+            if (link.from() < 0 || link.to() < 0 || link.from() >= points.size() || link.to() >= points.size()) {
+                continue;
+            }
+            RouteWaypoint from = points.get(link.from());
+            RouteWaypoint to = points.get(link.to());
+            if (!from.getDimension().equals(level.dimension().location()) || !to.getDimension().equals(level.dimension().location())) {
+                continue;
+            }
+            int fx = x0 + GRID_SIZE / 2 + (from.getPos().getX() - gridCenterX);
+            int fz = y0 + GRID_SIZE / 2 + (from.getPos().getZ() - gridCenterZ);
+            int tx = x0 + GRID_SIZE / 2 + (to.getPos().getX() - gridCenterX);
+            int tz = y0 + GRID_SIZE / 2 + (to.getPos().getZ() - gridCenterZ);
+            drawArrow(graphics, fx, fz, tx, tz, 0xFF4FC3F7);
+        }
+
+        for (int i = 0; i < points.size(); i++) {
+            RouteWaypoint wp = points.get(i);
             if (!wp.getDimension().equals(level.dimension().location())) {
                 continue;
             }
@@ -446,17 +492,46 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             int px = x0 + GRID_SIZE / 2 + dx;
             int pz = y0 + GRID_SIZE / 2 + dz;
             if (px < x0 || px >= x1 || pz < y0 || pz >= y1) {
-                hasLast = false;
                 continue;
             }
-            graphics.fill(px - 1, pz - 1, px + 2, pz + 2, 0xFFFFA000);
-            if (hasLast) {
-                drawLine(graphics, lastPx, lastPz, px, pz, 0xFF6FA8DC);
-            }
-            lastPx = px;
-            lastPz = pz;
-            hasLast = true;
+            int pointColor = i == selectedPointIndex ? 0xFFFF4040 : 0xFF4FC3F7;
+            graphics.fill(px - 1, pz - 1, px + 2, pz + 2, pointColor);
         }
+    }
+
+    private void updateMapCache(Level level) {
+        ResourceLocation dim = level.dimension().location();
+        if (gridDimension == null || !gridDimension.equals(dim)) {
+            gridDimension = dim;
+            mapDirty = true;
+        }
+        if (mapDirty || gridCenterX != lastMapCenterX || gridCenterZ != lastMapCenterZ) {
+            lastMapCenterX = gridCenterX;
+            lastMapCenterZ = gridCenterZ;
+            for (int dz = 0; dz < GRID_SIZE; dz++) {
+                int worldZ = gridCenterZ + dz - GRID_SIZE / 2;
+                for (int dx = 0; dx < GRID_SIZE; dx++) {
+                    int worldX = gridCenterX + dx - GRID_SIZE / 2;
+                    net.minecraft.core.BlockPos surface = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, new net.minecraft.core.BlockPos(worldX, 0, worldZ));
+                    BlockState state = level.getBlockState(surface);
+                    int color = state.getMapColor(level, surface).col;
+                    mapColors[dx][dz] = 0xFF000000 | color;
+                }
+            }
+            mapDirty = false;
+        }
+    }
+
+    private void drawArrow(GuiGraphics graphics, int x0, int y0, int x1, int y1, int color) {
+        drawLine(graphics, x0, y0, x1, y1, color);
+        double angle = Math.atan2(y1 - y0, x1 - x0);
+        int len = 4;
+        int leftX = (int) (x1 - len * Math.cos(angle - Math.PI / 6));
+        int leftY = (int) (y1 - len * Math.sin(angle - Math.PI / 6));
+        int rightX = (int) (x1 - len * Math.cos(angle + Math.PI / 6));
+        int rightY = (int) (y1 - len * Math.sin(angle + Math.PI / 6));
+        drawLine(graphics, x1, y1, leftX, leftY, color);
+        drawLine(graphics, x1, y1, rightX, rightY, color);
     }
 
     private void drawLine(GuiGraphics graphics, int x0, int y0, int x1, int y1, int color) {
@@ -495,11 +570,31 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         }
         if (isInsideGrid(mouseX, mouseY)) {
             if (button == 0) {
-                addWaypointFromGrid(mouseX, mouseY);
+                int hit = findPointIndexAt(mouseX, mouseY);
+                if (hit >= 0) {
+                    activeRoute.removeWaypointAt(hit);
+                    if (selectedPointIndex == hit) {
+                        selectedPointIndex = -1;
+                    }
+                } else {
+                    addWaypointFromGrid(mouseX, mouseY);
+                }
                 return true;
             }
             if (button == 1) {
-                startDrag(mouseX, mouseY);
+                int hit = findPointIndexAt(mouseX, mouseY);
+                if (hit >= 0) {
+                    if (selectedPointIndex == -1) {
+                        selectedPointIndex = hit;
+                    } else if (selectedPointIndex == hit) {
+                        selectedPointIndex = -1;
+                    } else {
+                        activeRoute.addLink(selectedPointIndex, hit);
+                        selectedPointIndex = -1;
+                    }
+                } else {
+                    startDrag(mouseX, mouseY);
+                }
                 return true;
             }
         }
@@ -560,9 +655,33 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         return mouseX >= x0 && mouseX <= x0 + GRID_SIZE && mouseY >= y0 && mouseY <= y0 + GRID_SIZE;
     }
 
+    private int findPointIndexAt(double mouseX, double mouseY) {
+        if (!isInsideGrid(mouseX, mouseY)) {
+            return -1;
+        }
+        int x0 = leftPos + GRID_X;
+        int y0 = topPos + GRID_Y;
+        List<RouteWaypoint> points = activeRoute.getWaypoints();
+        for (int i = 0; i < points.size(); i++) {
+            RouteWaypoint wp = points.get(i);
+            if (!wp.getDimension().equals(Minecraft.getInstance().level.dimension().location())) {
+                continue;
+            }
+            int dx = wp.getPos().getX() - gridCenterX;
+            int dz = wp.getPos().getZ() - gridCenterZ;
+            int px = x0 + GRID_SIZE / 2 + dx;
+            int pz = y0 + GRID_SIZE / 2 + dz;
+            double dist = Math.hypot(mouseX - px, mouseY - pz);
+            if (dist <= 3.0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     private boolean isInsideAircraftList(double mouseX, double mouseY) {
         int listX = leftPos + LEFT_X;
-        int listY = topPos + 112;
+        int listY = topPos + 122;
         int listWidth = 120;
         int listHeight = ROWS * ROW_HEIGHT;
         return mouseX >= listX && mouseX <= listX + listWidth && mouseY >= listY && mouseY <= listY + listHeight;

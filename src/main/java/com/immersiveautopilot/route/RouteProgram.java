@@ -12,6 +12,7 @@ import java.util.List;
 public class RouteProgram {
     private final String name;
     private final List<RouteWaypoint> waypoints = new ArrayList<>();
+    private final List<RouteLink> links = new ArrayList<>();
 
     public RouteProgram(String name) {
         this.name = name == null ? "" : name;
@@ -32,6 +33,10 @@ public class RouteProgram {
         return Collections.unmodifiableList(waypoints);
     }
 
+    public List<RouteLink> getLinks() {
+        return Collections.unmodifiableList(links);
+    }
+
     public void addWaypoint(RouteWaypoint waypoint) {
         if (waypoint != null) {
             waypoints.add(waypoint);
@@ -40,7 +45,37 @@ public class RouteProgram {
 
     public void removeLastWaypoint() {
         if (!waypoints.isEmpty()) {
-            waypoints.remove(waypoints.size() - 1);
+            removeWaypointAt(waypoints.size() - 1);
+        }
+    }
+
+    public void removeWaypointAt(int index) {
+        if (index < 0 || index >= waypoints.size()) {
+            return;
+        }
+        waypoints.remove(index);
+        links.removeIf(link -> link.from() == index || link.to() == index);
+        for (int i = 0; i < links.size(); i++) {
+            RouteLink link = links.get(i);
+            int from = link.from();
+            int to = link.to();
+            if (from > index) {
+                from--;
+            }
+            if (to > index) {
+                to--;
+            }
+            links.set(i, new RouteLink(from, to));
+        }
+    }
+
+    public void addLink(int from, int to) {
+        if (from < 0 || to < 0 || from >= waypoints.size() || to >= waypoints.size()) {
+            return;
+        }
+        RouteLink link = new RouteLink(from, to);
+        if (!links.contains(link)) {
+            links.add(link);
         }
     }
 
@@ -52,6 +87,14 @@ public class RouteProgram {
             list.add(waypoint.toTag());
         }
         tag.put("Waypoints", list);
+        ListTag linkList = new ListTag();
+        for (RouteLink link : links) {
+            CompoundTag linkTag = new CompoundTag();
+            linkTag.putInt("From", link.from());
+            linkTag.putInt("To", link.to());
+            linkList.add(linkTag);
+        }
+        tag.put("Links", linkList);
         return tag;
     }
 
@@ -64,6 +107,13 @@ public class RouteProgram {
                 program.addWaypoint(RouteWaypoint.fromTag(list.getCompound(i)));
             }
         }
+        if (tag.contains("Links", Tag.TAG_LIST)) {
+            ListTag linkList = tag.getList("Links", Tag.TAG_COMPOUND);
+            for (int i = 0; i < linkList.size(); i++) {
+                CompoundTag linkTag = linkList.getCompound(i);
+                program.addLink(linkTag.getInt("From"), linkTag.getInt("To"));
+            }
+        }
         return program;
     }
 
@@ -72,6 +122,11 @@ public class RouteProgram {
         buf.writeInt(waypoints.size());
         for (RouteWaypoint waypoint : waypoints) {
             waypoint.writeToBuf(buf);
+        }
+        buf.writeInt(links.size());
+        for (RouteLink link : links) {
+            buf.writeInt(link.from());
+            buf.writeInt(link.to());
         }
     }
 
@@ -82,6 +137,11 @@ public class RouteProgram {
         for (int i = 0; i < count; i++) {
             list.add(RouteWaypoint.readFromBuf(buf));
         }
-        return new RouteProgram(name, list);
+        RouteProgram program = new RouteProgram(name, list);
+        int linkCount = buf.readInt();
+        for (int i = 0; i < linkCount; i++) {
+            program.addLink(buf.readInt(), buf.readInt());
+        }
+        return program;
     }
 }

@@ -4,7 +4,12 @@ import org.jetbrains.annotations.Nullable;
 
 public interface AutopilotRouteHolder {
     @Nullable
-    RouteProgram getAutopilotRoute();
+    RouteProgram getAutopilotPrimary();
 
-    void setAutopilotRoute(@Nullable RouteProgram program);
+    void setAutopilotPrimary(@Nullable RouteProgram program);
+
+    @Nullable
+    RouteProgram getAutopilotBackup();
+
+    void setAutopilotBackup(@Nullable RouteProgram program);
 }
