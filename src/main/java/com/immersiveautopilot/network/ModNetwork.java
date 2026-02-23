@@ -23,5 +23,6 @@ public final class ModNetwork {
         NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, C2SUnbindAircraft.TYPE, C2SUnbindAircraft.STREAM_CODEC);
         NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, C2SSavePreset.TYPE, C2SSavePreset.STREAM_CODEC);
         NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, C2SLoadPreset.TYPE, C2SLoadPreset.STREAM_CODEC);
+        NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, C2SSetTowerConfig.TYPE, C2SSetTowerConfig.STREAM_CODEC);
     }
 }

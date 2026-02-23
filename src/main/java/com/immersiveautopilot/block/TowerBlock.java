@@ -45,6 +45,13 @@ public class TowerBlock extends Block implements EntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return null;
+        if (level.isClientSide) {
+            return null;
+        }
+        return (lvl, pos, blockState, be) -> {
+            if (be instanceof TowerBlockEntity tower) {
+                tower.tickServer();
+            }
+        };
     }
 }
