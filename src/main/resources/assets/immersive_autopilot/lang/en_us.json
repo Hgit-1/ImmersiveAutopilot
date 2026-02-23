@@ -39,6 +39,6 @@
   "screen.immersive_autopilot.route_offer_decline": "Decline",
   "screen.immersive_autopilot.route_offer_from": "From",
   "screen.immersive_autopilot.route_offer_points": "Waypoints",
-  "screen.immersive_autopilot.route_offer_primary": "Primary",
-  "screen.immersive_autopilot.route_offer_backup": "Backup"
+  "screen.immersive_autopilot.route_offer_primary": "Primary (Left Click)",
+  "screen.immersive_autopilot.route_offer_backup": "Backup (Right Click)"
 }

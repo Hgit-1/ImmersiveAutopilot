@@ -66,6 +66,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int gridCenterX;
     private int gridCenterZ;
     private ResourceLocation gridDimension;
+    private int mapRange = 256;
+    private int lastMapRange = 256;
     private int[][] mapColors = new int[GRID_SIZE][GRID_SIZE];
     private boolean mapDirty = true;
     private int lastMapCenterX;
@@ -327,6 +329,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             if (!rangeField.isFocused()) {
                 rangeField.setValue(Integer.toString(state.getScanRange()));
             }
+            if (state.getScanRange() != mapRange) {
+                mapRange = Math.max(1, state.getScanRange());
+            }
             if (!autoRequestField.isFocused()) {
                 autoRequestField.setValue(state.getAutoRequestText());
             }
@@ -475,10 +480,11 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             if (!from.getDimension().equals(level.dimension().location()) || !to.getDimension().equals(level.dimension().location())) {
                 continue;
             }
-            int fx = x0 + GRID_SIZE / 2 + (from.getPos().getX() - gridCenterX);
-            int fz = y0 + GRID_SIZE / 2 + (from.getPos().getZ() - gridCenterZ);
-            int tx = x0 + GRID_SIZE / 2 + (to.getPos().getX() - gridCenterX);
-            int tz = y0 + GRID_SIZE / 2 + (to.getPos().getZ() - gridCenterZ);
+            double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
+            int fx = x0 + (int) Math.round(GRID_SIZE / 2.0 + (from.getPos().getX() - gridCenterX) / blocksPerPixel);
+            int fz = y0 + (int) Math.round(GRID_SIZE / 2.0 + (from.getPos().getZ() - gridCenterZ) / blocksPerPixel);
+            int tx = x0 + (int) Math.round(GRID_SIZE / 2.0 + (to.getPos().getX() - gridCenterX) / blocksPerPixel);
+            int tz = y0 + (int) Math.round(GRID_SIZE / 2.0 + (to.getPos().getZ() - gridCenterZ) / blocksPerPixel);
             drawArrow(graphics, fx, fz, tx, tz, 0xFF4FC3F7);
         }
 
@@ -487,10 +493,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             if (!wp.getDimension().equals(level.dimension().location())) {
                 continue;
             }
-            int dx = wp.getPos().getX() - gridCenterX;
-            int dz = wp.getPos().getZ() - gridCenterZ;
-            int px = x0 + GRID_SIZE / 2 + dx;
-            int pz = y0 + GRID_SIZE / 2 + dz;
+            double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
+            int px = x0 + (int) Math.round(GRID_SIZE / 2.0 + (wp.getPos().getX() - gridCenterX) / blocksPerPixel);
+            int pz = y0 + (int) Math.round(GRID_SIZE / 2.0 + (wp.getPos().getZ() - gridCenterZ) / blocksPerPixel);
             if (px < x0 || px >= x1 || pz < y0 || pz >= y1) {
                 continue;
             }
@@ -505,13 +510,15 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             gridDimension = dim;
             mapDirty = true;
         }
-        if (mapDirty || gridCenterX != lastMapCenterX || gridCenterZ != lastMapCenterZ) {
+        if (mapDirty || gridCenterX != lastMapCenterX || gridCenterZ != lastMapCenterZ || mapRange != lastMapRange) {
             lastMapCenterX = gridCenterX;
             lastMapCenterZ = gridCenterZ;
+            lastMapRange = mapRange;
+            double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
             for (int dz = 0; dz < GRID_SIZE; dz++) {
-                int worldZ = gridCenterZ + dz - GRID_SIZE / 2;
+                int worldZ = gridCenterZ + (int) Math.round((dz - GRID_SIZE / 2.0) * blocksPerPixel);
                 for (int dx = 0; dx < GRID_SIZE; dx++) {
-                    int worldX = gridCenterX + dx - GRID_SIZE / 2;
+                    int worldX = gridCenterX + (int) Math.round((dx - GRID_SIZE / 2.0) * blocksPerPixel);
                     net.minecraft.core.BlockPos surface = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, new net.minecraft.core.BlockPos(worldX, 0, worldZ));
                     BlockState state = level.getBlockState(surface);
                     int color = state.getMapColor(level, surface).col;
@@ -637,10 +644,11 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         }
         int x0 = leftPos + GRID_X;
         int y0 = topPos + GRID_Y;
-        int gridX = (int) mouseX - x0 - GRID_SIZE / 2;
-        int gridZ = (int) mouseY - y0 - GRID_SIZE / 2;
-        int worldX = gridCenterX + gridX;
-        int worldZ = gridCenterZ + gridZ;
+        double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
+        double gridX = mouseX - x0 - GRID_SIZE / 2.0;
+        double gridZ = mouseY - y0 - GRID_SIZE / 2.0;
+        int worldX = gridCenterX + (int) Math.round(gridX * blocksPerPixel);
+        int worldZ = gridCenterZ + (int) Math.round(gridZ * blocksPerPixel);
         float speed = parseFloat(speedField.getValue(), 1.0f);
         int hold = parseInt(holdField.getValue(), 0);
         RouteProgram program = buildProgramFromUi();
@@ -662,17 +670,16 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int x0 = leftPos + GRID_X;
         int y0 = topPos + GRID_Y;
         List<RouteWaypoint> points = activeRoute.getWaypoints();
+        double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
         for (int i = 0; i < points.size(); i++) {
             RouteWaypoint wp = points.get(i);
             if (!wp.getDimension().equals(Minecraft.getInstance().level.dimension().location())) {
                 continue;
             }
-            int dx = wp.getPos().getX() - gridCenterX;
-            int dz = wp.getPos().getZ() - gridCenterZ;
-            int px = x0 + GRID_SIZE / 2 + dx;
-            int pz = y0 + GRID_SIZE / 2 + dz;
+            int px = x0 + (int) Math.round(GRID_SIZE / 2.0 + (wp.getPos().getX() - gridCenterX) / blocksPerPixel);
+            int pz = y0 + (int) Math.round(GRID_SIZE / 2.0 + (wp.getPos().getZ() - gridCenterZ) / blocksPerPixel);
             double dist = Math.hypot(mouseX - px, mouseY - pz);
-            if (dist <= 3.0) {
+            if (dist <= 4.0) {
                 return i;
             }
         }
@@ -688,7 +695,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     }
 
     private int getAircraftIndex(double mouseX, double mouseY) {
-        int listY = topPos + 112;
+        int listY = topPos + 122;
         int row = (int) ((mouseY - listY) / ROW_HEIGHT);
         return page * ROWS + row;
     }

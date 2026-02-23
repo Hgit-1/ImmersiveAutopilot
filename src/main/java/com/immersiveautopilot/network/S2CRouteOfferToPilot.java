@@ -53,7 +53,15 @@ public class S2CRouteOfferToPilot extends Message {
 
     @Override
     public void receiveClient() {
-        Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreen(new RouteOfferScreen(vehicleId, operatorName, entries)));
+        Minecraft.getInstance().execute(() -> {
+            if (Minecraft.getInstance().player == null) {
+                return;
+            }
+            if (Minecraft.getInstance().player.getVehicle() == null || Minecraft.getInstance().player.getVehicle().getId() != vehicleId) {
+                return;
+            }
+            Minecraft.getInstance().setScreen(new RouteOfferScreen(vehicleId, operatorName, entries));
+        });
     }
 
     @Override

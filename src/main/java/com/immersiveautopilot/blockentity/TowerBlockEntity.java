@@ -179,7 +179,8 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         if (worldConfig == null && level instanceof ServerLevel serverLevel) {
             worldConfig = WorldConfig.get(serverLevel);
             if (scanRange == DEFAULT_SCAN_RANGE) {
-                scanRange = worldConfig.defaultScanRange;
+                int configured = worldConfig.defaultScanRange > 0 ? worldConfig.defaultScanRange : worldConfig.scanRange;
+                scanRange = configured > 0 ? configured : DEFAULT_SCAN_RANGE;
             }
         }
         boolean powered = isPowered();
