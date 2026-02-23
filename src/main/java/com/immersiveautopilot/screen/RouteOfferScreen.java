@@ -60,16 +60,10 @@ public class RouteOfferScreen extends Screen {
         int panelRight = this.width / 2 + 140;
         int panelTop = this.height / 2 - 100;
         int panelBottom = this.height / 2 + 90;
-        graphics.fill(panelLeft, panelTop, panelRight, panelBottom, 0xCC101214);
-
-        graphics.drawCenteredString(this.font, title.copy().withStyle(ChatFormatting.BOLD), this.width / 2, this.height / 2 - 90, 0xFFFFFFFF);
-        graphics.drawCenteredString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_from")
-                .append(": ").append(operatorName).withStyle(ChatFormatting.BOLD), this.width / 2, this.height / 2 - 70, 0xFFFFFFFF);
+        graphics.fill(panelLeft, panelTop, panelRight, panelBottom, 0xE0101214);
 
         int listX = this.width / 2 - 120;
         int listY = this.height / 2 - 50;
-        graphics.drawString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_primary").withStyle(ChatFormatting.BOLD), listX, listY - 14, 0xFFFFFFFF, true);
-        graphics.drawString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_backup").withStyle(ChatFormatting.BOLD), listX + 160, listY - 14, 0xFFFFFFFF, true);
 
         for (int i = 0; i < entries.size(); i++) {
             int y = listY + i * 14;
@@ -81,6 +75,12 @@ public class RouteOfferScreen extends Screen {
 
         acceptButton.active = selectedPrimary >= 0;
         super.render(graphics, mouseX, mouseY, partialTick);
+
+        graphics.drawCenteredString(this.font, title.copy().withStyle(ChatFormatting.BOLD), this.width / 2, this.height / 2 - 90, 0xFFFFFFFF);
+        graphics.drawCenteredString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_from")
+                .append(": ").append(operatorName).withStyle(ChatFormatting.BOLD), this.width / 2, this.height / 2 - 70, 0xFFFFFFFF);
+        graphics.drawString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_primary").withStyle(ChatFormatting.BOLD), listX, listY - 14, 0xFFFFFFFF, true);
+        graphics.drawString(this.font, Component.translatable("screen.immersive_autopilot.route_offer_backup").withStyle(ChatFormatting.BOLD), listX + 160, listY - 14, 0xFFFFFFFF, true);
     }
 
     @Override

@@ -68,6 +68,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private ResourceLocation gridDimension;
     private int mapRange = 256;
     private int lastMapRange = 256;
+    private int mapBuildRow = 0;
     private int[][] mapColors = new int[GRID_SIZE][GRID_SIZE];
     private boolean mapDirty = true;
     private int lastMapCenterX;
@@ -81,6 +82,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int dragStartCenterZ;
 
     private boolean targetAllInRange = false;
+    private boolean localRouteDirty = false;
 
     public TowerScreen(TowerMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -239,12 +241,14 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         RouteProgram program = buildProgramFromUi();
         program.addWaypoint(new RouteWaypoint(player.blockPosition(), player.level().dimension().location(), speed, hold));
         activeRoute = program;
+        localRouteDirty = true;
     }
 
     private void removeWaypoint() {
         RouteProgram program = buildProgramFromUi();
         program.removeLastWaypoint();
         activeRoute = program;
+        localRouteDirty = true;
     }
 
     private void savePreset() {
@@ -254,6 +258,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         }
         RouteProgram program = buildProgramFromUi();
         NetworkHandler.sendToServer(new C2SSavePreset(menu.getPos(), name, program));
+        localRouteDirty = false;
     }
 
     private void loadPreset() {
@@ -262,6 +267,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             return;
         }
         NetworkHandler.sendToServer(new C2SLoadPreset(menu.getPos(), name));
+        localRouteDirty = false;
     }
 
     private void sendRoute() {
@@ -345,7 +351,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 String desiredName = routeNameField.getValue();
                 boolean shouldUpdate = activeRoute.getWaypoints().isEmpty()
                         || (desiredName != null && desiredName.equals(state.getActiveRoute().getName()));
-                if (shouldUpdate) {
+                if (shouldUpdate && !localRouteDirty) {
                     activeRoute = state.getActiveRoute();
                     if (!routeNameField.isFocused()) {
                         routeNameField.setValue(activeRoute.getName());
@@ -361,14 +367,25 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 selectedIndex = -1;
             }
         }
+
+        Player player = Minecraft.getInstance().player;
+        if (player != null) {
+            updateMapCache(player.level());
+        }
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics, mouseX, mouseY, partialTick);
-        graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xF0121418);
-        graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFFFF, true);
+        graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF0F1114);
 
+        drawAircraftList(graphics);
+        drawRouteList(graphics);
+        drawGrid(graphics);
+
+        super.render(graphics, mouseX, mouseY, partialTick);
+
+        graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFFFF, true);
         graphics.drawString(font, Component.translatable("screen.immersive_autopilot.tower_name"), leftPos + LEFT_X, topPos + 12, 0xFFFFFFFF, true);
         graphics.drawString(font, Component.translatable("screen.immersive_autopilot.scan_range"), leftPos + LEFT_X, topPos + 46, 0xFFFFFFFF, true);
         graphics.drawString(font, Component.translatable("screen.immersive_autopilot.route_name"), leftPos + RIGHT_X, topPos + 12, 0xFFFFFFFF, true);
@@ -386,12 +403,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         graphics.drawString(font, Component.translatable("screen.immersive_autopilot.enter_text"), leftPos + LEFT_X, topPos + 346, 0xFFFFFFFF, true);
         graphics.drawString(font, Component.translatable("screen.immersive_autopilot.exit_text"), leftPos + LEFT_X, topPos + 370, 0xFFFFFFFF, true);
 
-        drawAircraftList(graphics);
-        drawRouteList(graphics);
-        drawGrid(graphics);
         drawHoverCoords(graphics, mouseX, mouseY);
-
-        super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
     }
 
@@ -455,7 +467,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             return;
         }
         Level level = player.level();
-        updateMapCache(level);
 
         for (int dz = 0; dz < GRID_SIZE; dz++) {
             for (int dx = 0; dx < GRID_SIZE; dx++) {
@@ -509,22 +520,39 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         if (gridDimension == null || !gridDimension.equals(dim)) {
             gridDimension = dim;
             mapDirty = true;
+            mapBuildRow = 0;
         }
-        if (mapDirty || gridCenterX != lastMapCenterX || gridCenterZ != lastMapCenterZ || mapRange != lastMapRange) {
+        if (gridCenterX != lastMapCenterX || gridCenterZ != lastMapCenterZ || mapRange != lastMapRange) {
             lastMapCenterX = gridCenterX;
             lastMapCenterZ = gridCenterZ;
             lastMapRange = mapRange;
-            double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
-            for (int dz = 0; dz < GRID_SIZE; dz++) {
-                int worldZ = gridCenterZ + (int) Math.round((dz - GRID_SIZE / 2.0) * blocksPerPixel);
-                for (int dx = 0; dx < GRID_SIZE; dx++) {
-                    int worldX = gridCenterX + (int) Math.round((dx - GRID_SIZE / 2.0) * blocksPerPixel);
-                    net.minecraft.core.BlockPos surface = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, new net.minecraft.core.BlockPos(worldX, 0, worldZ));
-                    BlockState state = level.getBlockState(surface);
-                    int color = state.getMapColor(level, surface).col;
-                    mapColors[dx][dz] = 0xFF000000 | color;
+            mapDirty = true;
+            mapBuildRow = 0;
+        }
+        if (!mapDirty) {
+            return;
+        }
+        double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
+        int rowsPerUpdate = 8;
+        int endRow = Math.min(GRID_SIZE, mapBuildRow + rowsPerUpdate);
+        net.minecraft.core.BlockPos.MutableBlockPos mutable = new net.minecraft.core.BlockPos.MutableBlockPos();
+        for (int dz = mapBuildRow; dz < endRow; dz++) {
+            int worldZ = gridCenterZ + (int) Math.round((dz - GRID_SIZE / 2.0) * blocksPerPixel);
+            for (int dx = 0; dx < GRID_SIZE; dx++) {
+                int worldX = gridCenterX + (int) Math.round((dx - GRID_SIZE / 2.0) * blocksPerPixel);
+                mutable.set(worldX, 0, worldZ);
+                if (!level.hasChunkAt(mutable)) {
+                    mapColors[dx][dz] = 0xFF000000;
+                    continue;
                 }
+                net.minecraft.core.BlockPos surface = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, mutable);
+                BlockState state = level.getBlockState(surface);
+                int color = state.getMapColor(level, surface).col;
+                mapColors[dx][dz] = 0xFF000000 | color;
             }
+        }
+        mapBuildRow = endRow;
+        if (mapBuildRow >= GRID_SIZE) {
             mapDirty = false;
         }
     }
@@ -583,6 +611,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                     if (selectedPointIndex == hit) {
                         selectedPointIndex = -1;
                     }
+                    localRouteDirty = true;
                 } else {
                     addWaypointFromGrid(mouseX, mouseY);
                 }
@@ -598,6 +627,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                     } else {
                         activeRoute.addLink(selectedPointIndex, hit);
                         selectedPointIndex = -1;
+                        localRouteDirty = true;
                     }
                 } else {
                     startDrag(mouseX, mouseY);
@@ -656,6 +686,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 player.level().dimension().location(), speed, hold));
         activeRoute = program;
         selectedPointIndex = activeRoute.getWaypoints().size() - 1;
+        localRouteDirty = true;
     }
 
     private boolean isInsideGrid(double mouseX, double mouseY) {
