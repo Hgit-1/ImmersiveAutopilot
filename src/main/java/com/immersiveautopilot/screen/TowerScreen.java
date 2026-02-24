@@ -43,7 +43,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private static final int ROW_HEIGHT = 14;
     private static final int WAYPOINT_ROWS = 6;
 
-    private static final int GRID_SIZE = 110;
+    private static final int GRID_SIZE = 96;
     private static final int SCROLLBAR_WIDTH = 10;
     private static final int SCROLLBAR_PADDING = 4;
     private static final int MIN_PANEL_WIDTH = 240;
