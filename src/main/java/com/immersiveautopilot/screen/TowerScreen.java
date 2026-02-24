@@ -88,6 +88,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int lastMapCenterX;
     private int lastMapCenterZ;
     private int selectedPointIndex = -1;
+    private int lastSelectedPointIndex = -1;
     private int hoverPointIndex = -1;
     private boolean draggingGrid = false;
     private double dragStartX;
@@ -272,8 +273,11 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         waypointYField.active = active;
         if (active) {
             RouteWaypoint wp = activeRoute.getWaypoints().get(selectedPointIndex);
-            waypointYField.setValue(Integer.toString(wp.getPos().getY()));
+            if (!waypointYField.isFocused() || selectedPointIndex != lastSelectedPointIndex) {
+                waypointYField.setValue(Integer.toString(wp.getPos().getY()));
+            }
         }
+        lastSelectedPointIndex = selectedPointIndex;
     }
 
     private void applyWaypointEdit() {

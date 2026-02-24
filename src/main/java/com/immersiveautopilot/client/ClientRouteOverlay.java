@@ -1,6 +1,18 @@
 package com.immersiveautopilot.client;
 
 import com.immersiveautopilot.ImmersiveAutopilot;
+import com.immersiveautopilot.route.RouteProgram;
+import com.immersiveautopilot.route.RouteWaypoint;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import immersive_aircraft.entity.VehicleEntity;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -16,7 +28,41 @@ public final class ClientRouteOverlay {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        // HUD route markers disabled; use an external map mod (e.g., Xaero's) if needed.
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        Player player = mc.player;
+        if (player == null) {
+            return;
+        }
+        if (!(player.getVehicle() instanceof VehicleEntity vehicle)) {
+            return;
+        }
+        RouteProgram primary = ClientRouteCache.getPrimary(vehicle.getId());
+        RouteProgram backup = ClientRouteCache.getBackup(vehicle.getId());
+        if (primary == null && backup == null) {
+            return;
+        }
+        Camera camera = mc.gameRenderer.getMainCamera();
+        Vec3 camPos = camera.getPosition();
+        PoseStack pose = event.getPoseStack();
+        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+        Font font = mc.font;
+
+        RenderSystem.disableDepthTest();
+        RenderSystem.enableBlend();
+
+        if (primary != null) {
+            renderRoute(pose, buffers, font, camPos, player.level(), primary, PRIMARY_COLOR);
+        }
+        if (backup != null) {
+            renderRoute(pose, buffers, font, camPos, player.level(), backup, BACKUP_COLOR);
+        }
+
+        buffers.endBatch();
+        RenderSystem.disableBlend();
+        RenderSystem.enableDepthTest();
     }
 
     private static void renderRoute(PoseStack pose, MultiBufferSource buffers, Font font, Vec3 camPos, Level level, RouteProgram program, int color) {
