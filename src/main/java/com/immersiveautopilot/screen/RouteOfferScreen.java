@@ -89,7 +89,7 @@ public class RouteOfferScreen extends Screen {
     }
 
     @Override
-    protected void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         // Intentionally blank to avoid background blur.
     }
 

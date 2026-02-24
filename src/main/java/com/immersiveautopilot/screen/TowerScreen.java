@@ -535,7 +535,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     }
 
     @Override
-    protected void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         // Avoid background blur from other UI mods.
     }
 
