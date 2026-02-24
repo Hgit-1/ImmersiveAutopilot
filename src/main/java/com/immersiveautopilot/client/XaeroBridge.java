@@ -36,6 +36,46 @@ public final class XaeroBridge {
         }
     }
 
+    public static boolean renderMinimap(Object guiGraphics, int x, int y, int width, int height, float partialTick) {
+        try {
+            Class<?> sessionClass = Class.forName("xaero.common.XaeroMinimapSession");
+            Method getCurrentSession = sessionClass.getMethod("getCurrentSession");
+            Object session = getCurrentSession.invoke(null);
+            if (session == null) {
+                return false;
+            }
+            Method getMinimapProcessor = sessionClass.getMethod("getMinimapProcessor");
+            Object processor = getMinimapProcessor.invoke(session);
+            if (processor == null) {
+                return false;
+            }
+
+            Class<?> consumersClass = Class.forName("xaero.common.graphics.CustomVertexConsumers");
+            Object consumers = consumersClass.getConstructor().newInstance();
+
+            Class<?> mcClass = Class.forName("net.minecraft.client.Minecraft");
+            Method getInstance = mcClass.getMethod("getInstance");
+            Object mc = getInstance.invoke(null);
+            Method getWindow = mcClass.getMethod("getWindow");
+            Object window = getWindow.invoke(mc);
+            Method getScaledWidth = window.getClass().getMethod("getGuiScaledWidth");
+            Method getScaledHeight = window.getClass().getMethod("getGuiScaledHeight");
+            int screenW = (int) getScaledWidth.invoke(window);
+            int screenH = (int) getScaledHeight.invoke(window);
+
+            Method onRender = processor.getClass().getMethod(
+                    "onRender",
+                    Class.forName("net.minecraft.client.gui.GuiGraphics"),
+                    int.class, int.class, int.class, int.class,
+                    double.class, int.class, int.class, float.class, consumersClass
+            );
+            onRender.invoke(processor, guiGraphics, x, y, width, height, 1.0d, screenW, screenH, partialTick, consumers);
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     private static Object getCurrentWaypointSet() throws Exception {
         Class<?> sessionClass = Class.forName("xaero.common.XaeroMinimapSession");
         Method getCurrentSession = sessionClass.getMethod("getCurrentSession");

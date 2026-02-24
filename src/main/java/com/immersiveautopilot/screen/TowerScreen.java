@@ -49,6 +49,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private static final int GRID_SIZE = 128;
     private static final int GRID_X = RIGHT_X;
     private static final int GRID_Y = 196;
+    private static final int SCROLLBAR_WIDTH = 6;
+    private static final int SCROLLBAR_PADDING = 4;
 
     private EditBox towerNameField;
     private EditBox rangeField;
@@ -101,11 +103,34 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private PageMode pageMode = PageMode.BASE;
     private final List<AbstractWidget> baseWidgets = new ArrayList<>();
     private final List<AbstractWidget> routeWidgets = new ArrayList<>();
+    private final List<WidgetSlot> baseSlots = new ArrayList<>();
+    private final List<WidgetSlot> routeSlots = new ArrayList<>();
+    private int baseScrollOffset = 0;
+    private int routeScrollOffset = 0;
+    private int baseContentHeight = 0;
+    private int routeContentHeight = 0;
+    private boolean draggingScroll = false;
+    private int dragStartY = 0;
+    private int dragStartScroll = 0;
 
     public TowerScreen(TowerMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
         super(menu, inventory, title);
         this.imageWidth = 320;
         this.imageHeight = 400;
+    }
+
+    private static final class WidgetSlot {
+        private final AbstractWidget widget;
+        private final int baseX;
+        private final int baseY;
+        private final int height;
+
+        private WidgetSlot(AbstractWidget widget, int baseX, int baseY, int height) {
+            this.widget = widget;
+            this.baseX = baseX;
+            this.baseY = baseY;
+            this.height = height;
+        }
     }
 
     @Override
@@ -219,6 +244,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
         NetworkHandler.sendToServer(new C2SRequestTowerState(menu.getPos()));
         refreshAircraftList();
+        updateContentHeights();
+        applyScrollToWidgets();
     }
 
     private void refreshAircraftList() {
@@ -230,11 +257,13 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private void addBaseWidget(AbstractWidget widget) {
         addRenderableWidget(widget);
         baseWidgets.add(widget);
+        baseSlots.add(new WidgetSlot(widget, getWidgetX(widget), getWidgetY(widget), getWidgetHeight(widget)));
     }
 
     private void addRouteWidget(AbstractWidget widget) {
         addRenderableWidget(widget);
         routeWidgets.add(widget);
+        routeSlots.add(new WidgetSlot(widget, getWidgetX(widget), getWidgetY(widget), getWidgetHeight(widget)));
     }
 
     private void setPageMode(PageMode mode) {
@@ -253,6 +282,75 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         updateWaypointControls();
         mapDirty = true;
         mapBuildRow = 0;
+        updateContentHeights();
+    }
+
+    private int getContentX0() {
+        return leftPos + 8;
+    }
+
+    private int getContentY0() {
+        return topPos + 26;
+    }
+
+    private int getContentX1() {
+        return leftPos + imageWidth - 12;
+    }
+
+    private int getContentY1() {
+        return topPos + imageHeight - 16;
+    }
+
+    private int getViewportHeight() {
+        return getContentY1() - getContentY0();
+    }
+
+    private int getScrollOffset() {
+        return pageMode == PageMode.BASE ? baseScrollOffset : routeScrollOffset;
+    }
+
+    private void setScrollOffset(int value) {
+        int max = Math.max(0, getContentHeight() - getViewportHeight());
+        int clamped = Math.max(0, Math.min(max, value));
+        if (pageMode == PageMode.BASE) {
+            baseScrollOffset = clamped;
+        } else {
+            routeScrollOffset = clamped;
+        }
+    }
+
+    private int getContentHeight() {
+        return pageMode == PageMode.BASE ? baseContentHeight : routeContentHeight;
+    }
+
+    private void updateContentHeights() {
+        int contentTop = getContentY0();
+        int baseMax = contentTop;
+        for (WidgetSlot slot : baseSlots) {
+            baseMax = Math.max(baseMax, slot.baseY + slot.height);
+        }
+        baseContentHeight = Math.max(1, baseMax - contentTop + 8);
+
+        int routeMax = contentTop;
+        for (WidgetSlot slot : routeSlots) {
+            routeMax = Math.max(routeMax, slot.baseY + slot.height);
+        }
+        int gridBottom = topPos + GRID_Y + GRID_SIZE;
+        routeMax = Math.max(routeMax, gridBottom + 8);
+        routeContentHeight = Math.max(1, routeMax - contentTop + 8);
+    }
+
+    private void applyScrollToWidgets() {
+        int offset = getScrollOffset();
+        if (pageMode == PageMode.BASE) {
+            for (WidgetSlot slot : baseSlots) {
+                setWidgetPosition(slot.widget, slot.baseX, slot.baseY - offset);
+            }
+        } else {
+            for (WidgetSlot slot : routeSlots) {
+                setWidgetPosition(slot.widget, slot.baseX, slot.baseY - offset);
+            }
+        }
     }
 
     private void applyConfig() {
@@ -407,6 +505,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     @Override
     public void containerTick() {
         super.containerTick();
+        applyScrollToWidgets();
         TowerState state = ClientCache.getTowerState(menu.getPos());
         if (state != null) {
             boundUuid = state.getBoundAircraft();
@@ -466,40 +565,50 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        applyScrollToWidgets();
         // Avoid background blur from other UI mods.
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF0F1114);
+
+        int contentX0 = getContentX0();
+        int contentY0 = getContentY0();
+        int contentX1 = getContentX1();
+        int contentY1 = getContentY1();
+        graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFFFF, true);
+        graphics.enableScissor(contentX0, contentY0, contentX1, contentY1);
 
         if (pageMode == PageMode.BASE) {
             drawAircraftList(graphics);
         } else {
             drawRouteList(graphics);
-            drawGrid(graphics);
+            drawGrid(graphics, partialTick);
         }
 
         super.render(graphics, mouseX, mouseY, partialTick);
 
-        graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFFFF, true);
+        int offset = getScrollOffset();
         if (pageMode == PageMode.BASE) {
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.tower_name"), leftPos + LEFT_X, topPos + 16, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.scan_range"), leftPos + LEFT_X, topPos + 50, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), leftPos + LEFT_X, topPos + 110, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.tower_name"), leftPos + LEFT_X, topPos + 16 - offset, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.scan_range"), leftPos + LEFT_X, topPos + 50 - offset, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), leftPos + LEFT_X, topPos + 110 - offset, 0xFFFFFFFF, true);
 
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.bound_aircraft"), leftPos + LEFT_X, topPos + 196, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.bound_aircraft"), leftPos + LEFT_X, topPos + 196 - offset, 0xFFFFFFFF, true);
             String boundText = boundName == null || boundName.isBlank() ? Component.translatable("screen.immersive_autopilot.no_bound_aircraft").getString() : boundName;
-            graphics.drawString(font, boundText, leftPos + LEFT_X, topPos + 208, 0xFFFFFFFF, true);
+            graphics.drawString(font, boundText, leftPos + LEFT_X, topPos + 208 - offset, 0xFFFFFFFF, true);
 
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.auto_request"), leftPos + LEFT_X, topPos + 300, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.enter_text"), leftPos + LEFT_X, topPos + 322, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.exit_text"), leftPos + LEFT_X, topPos + 344, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.auto_request"), leftPos + LEFT_X, topPos + 300 - offset, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.enter_text"), leftPos + LEFT_X, topPos + 322 - offset, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.exit_text"), leftPos + LEFT_X, topPos + 344 - offset, 0xFFFFFFFF, true);
         } else {
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.route_name"), leftPos + RIGHT_X, topPos + 16, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), leftPos + RIGHT_X, topPos + 110, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoint_y"), leftPos + RIGHT_X, topPos + 230, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.route_name"), leftPos + RIGHT_X, topPos + 16 - offset, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), leftPos + RIGHT_X, topPos + 110 - offset, 0xFFFFFFFF, true);
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoint_y"), leftPos + RIGHT_X, topPos + 230 - offset, 0xFFFFFFFF, true);
         }
 
         if (pageMode == PageMode.ROUTE) {
             drawHoverCoords(graphics, mouseX, mouseY);
         }
+        graphics.disableScissor();
+        drawScrollbar(graphics);
         renderTooltip(graphics, mouseX, mouseY);
     }
 
@@ -510,6 +619,47 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             String text = wp.getPos().getX() + ", " + wp.getPos().getY() + ", " + wp.getPos().getZ();
             graphics.drawString(font, text, mouseX + 8, mouseY + 8, 0xFFFFFFFF, true);
         }
+    }
+
+    private void drawScrollbar(GuiGraphics graphics) {
+        int contentX0 = getContentX0();
+        int contentY0 = getContentY0();
+        int contentX1 = getContentX1();
+        int contentY1 = getContentY1();
+        int barX0 = contentX1 + SCROLLBAR_PADDING;
+        int barX1 = barX0 + SCROLLBAR_WIDTH;
+        int barY0 = contentY0;
+        int barY1 = contentY1;
+
+        graphics.fill(barX0, barY0, barX1, barY1, 0xFF1B1F26);
+
+        int viewport = getViewportHeight();
+        int content = getContentHeight();
+        if (content <= viewport) {
+            graphics.fill(barX0, barY0, barX1, barY1, 0xFF8FB3B3);
+            return;
+        }
+        int maxScroll = content - viewport;
+        int thumbHeight = Math.max(16, (int) Math.round(viewport * (viewport / (double) content)));
+        int trackHeight = viewport - thumbHeight;
+        int thumbY = barY0 + (int) Math.round(trackHeight * (getScrollOffset() / (double) maxScroll));
+        graphics.fill(barX0, thumbY, barX1, thumbY + thumbHeight, 0xFFE5F5F5);
+    }
+
+    private boolean isInsideContent(double mouseX, double mouseY) {
+        int x0 = getContentX0();
+        int y0 = getContentY0();
+        int x1 = getContentX1();
+        int y1 = getContentY1();
+        return mouseX >= x0 && mouseX <= x1 && mouseY >= y0 && mouseY <= y1;
+    }
+
+    private boolean isInsideScrollbar(double mouseX, double mouseY) {
+        int barX0 = getContentX1() + SCROLLBAR_PADDING;
+        int barX1 = barX0 + SCROLLBAR_WIDTH;
+        int barY0 = getContentY0();
+        int barY1 = getContentY1();
+        return mouseX >= barX0 && mouseX <= barX1 && mouseY >= barY0 && mouseY <= barY1;
     }
 
     @Override
@@ -529,7 +679,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private void drawAircraftList(GuiGraphics graphics) {
         int listX = leftPos + LEFT_X;
-        int listY = topPos + 126;
+        int listY = topPos + 126 - getScrollOffset();
 
         int start = aircraftScroll;
         for (int i = 0; i < ROWS; i++) {
@@ -547,7 +697,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private void drawRouteList(GuiGraphics graphics) {
         int listX = leftPos + RIGHT_X;
-        int listY = topPos + 126;
+        int listY = topPos + 126 - getScrollOffset();
         List<RouteWaypoint> points = activeRoute.getWaypoints();
         int max = Math.min(points.size() - waypointScroll, WAYPOINT_ROWS);
         for (int i = 0; i < max; i++) {
@@ -559,11 +709,15 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         }
     }
 
-    private void drawGrid(GuiGraphics graphics) {
+    private void drawGrid(GuiGraphics graphics, float partialTick) {
         int x0 = leftPos + GRID_X;
-        int y0 = topPos + GRID_Y;
+        int y0 = topPos + GRID_Y - getScrollOffset();
         int x1 = x0 + GRID_SIZE;
         int y1 = y0 + GRID_SIZE;
+
+        if (com.immersiveautopilot.client.XaeroBridge.renderMinimap(graphics, x0, y0, GRID_SIZE, GRID_SIZE, partialTick)) {
+            return;
+        }
 
         Player player = Minecraft.getInstance().player;
         if (player == null) {
@@ -700,6 +854,12 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && isInsideScrollbar(mouseX, mouseY)) {
+            draggingScroll = true;
+            dragStartY = (int) mouseY;
+            dragStartScroll = getScrollOffset();
+            return true;
+        }
         if (pageMode == PageMode.BASE && button == 0 && isInsideAircraftList(mouseX, mouseY)) {
             int index = getAircraftIndex(mouseX, mouseY);
             if (index >= 0 && index < aircraft.size()) {
@@ -756,6 +916,10 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             draggingGrid = false;
             return true;
         }
+        if (button == 0 && draggingScroll) {
+            draggingScroll = false;
+            return true;
+        }
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
@@ -766,6 +930,19 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             int dz = (int) (mouseY - dragStartY);
             gridCenterX = dragStartCenterX - dx;
             gridCenterZ = dragStartCenterZ - dz;
+            return true;
+        }
+        if (draggingScroll && button == 0) {
+            int viewport = getViewportHeight();
+            int content = getContentHeight();
+            if (content > viewport) {
+                int maxScroll = content - viewport;
+                int thumbHeight = Math.max(16, (int) Math.round(viewport * (viewport / (double) content)));
+                int trackHeight = viewport - thumbHeight;
+                int delta = (int) mouseY - dragStartY;
+                int scrollDelta = (int) Math.round(delta * (maxScroll / (double) Math.max(1, trackHeight)));
+                setScrollOffset(dragStartScroll + scrollDelta);
+            }
             return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
@@ -791,6 +968,15 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             }
             return true;
         }
+        if (isInsideContent(mouseX, mouseY)) {
+            int step = 18;
+            if (deltaY < 0) {
+                setScrollOffset(getScrollOffset() + step);
+            } else if (deltaY > 0) {
+                setScrollOffset(getScrollOffset() - step);
+            }
+            return true;
+        }
         return super.mouseScrolled(mouseX, mouseY, deltaX, deltaY);
     }
 
@@ -808,7 +994,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             return;
         }
         int x0 = leftPos + GRID_X;
-        int y0 = topPos + GRID_Y;
+        int y0 = topPos + GRID_Y - getScrollOffset();
         double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
         double gridX = mouseX - x0 - GRID_SIZE / 2.0;
         double gridZ = mouseY - y0 - GRID_SIZE / 2.0;
@@ -829,7 +1015,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private boolean isInsideGrid(double mouseX, double mouseY) {
         int x0 = leftPos + GRID_X;
-        int y0 = topPos + GRID_Y;
+        int y0 = topPos + GRID_Y - getScrollOffset();
         return mouseX >= x0 && mouseX <= x0 + GRID_SIZE && mouseY >= y0 && mouseY <= y0 + GRID_SIZE;
     }
 
@@ -838,7 +1024,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             return -1;
         }
         int x0 = leftPos + GRID_X;
-        int y0 = topPos + GRID_Y;
+        int y0 = topPos + GRID_Y - getScrollOffset();
         List<RouteWaypoint> points = activeRoute.getWaypoints();
         double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
         for (int i = 0; i < points.size(); i++) {
@@ -858,27 +1044,27 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private boolean isInsideAircraftList(double mouseX, double mouseY) {
         int listX = leftPos + LEFT_X;
-        int listY = topPos + 126;
+        int listY = topPos + 126 - getScrollOffset();
         int listWidth = 120;
         int listHeight = ROWS * ROW_HEIGHT;
         return mouseX >= listX && mouseX <= listX + listWidth && mouseY >= listY && mouseY <= listY + listHeight;
     }
 
     private int getAircraftIndex(double mouseX, double mouseY) {
-        int listY = topPos + 126;
+        int listY = topPos + 126 - getScrollOffset();
         int row = (int) ((mouseY - listY) / ROW_HEIGHT);
         return aircraftScroll + row;
     }
 
     private int getWaypointIndex(double mouseX, double mouseY) {
-        int listY = topPos + 126;
+        int listY = topPos + 126 - getScrollOffset();
         int row = (int) ((mouseY - listY) / ROW_HEIGHT);
         return waypointScroll + row;
     }
 
     private boolean isInsideWaypointList(double mouseX, double mouseY) {
         int listX = leftPos + RIGHT_X;
-        int listY = topPos + 126;
+        int listY = topPos + 126 - getScrollOffset();
         int listWidth = 140;
         int listHeight = WAYPOINT_ROWS * ROW_HEIGHT;
         return mouseX >= listX && mouseX <= listX + listWidth && mouseY >= listY && mouseY <= listY + listHeight;
@@ -889,6 +1075,64 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             return Integer.parseInt(value.trim());
         } catch (Exception e) {
             return fallback;
+        }
+    }
+
+    private static int getWidgetX(AbstractWidget widget) {
+        try {
+            return (int) widget.getClass().getMethod("getX").invoke(widget);
+        } catch (Exception ignored) {
+        }
+        try {
+            java.lang.reflect.Field field = widget.getClass().getDeclaredField("x");
+            field.setAccessible(true);
+            return field.getInt(widget);
+        } catch (Exception ignored) {
+        }
+        return 0;
+    }
+
+    private static int getWidgetY(AbstractWidget widget) {
+        try {
+            return (int) widget.getClass().getMethod("getY").invoke(widget);
+        } catch (Exception ignored) {
+        }
+        try {
+            java.lang.reflect.Field field = widget.getClass().getDeclaredField("y");
+            field.setAccessible(true);
+            return field.getInt(widget);
+        } catch (Exception ignored) {
+        }
+        return 0;
+    }
+
+    private static int getWidgetHeight(AbstractWidget widget) {
+        try {
+            return (int) widget.getClass().getMethod("getHeight").invoke(widget);
+        } catch (Exception ignored) {
+        }
+        try {
+            java.lang.reflect.Field field = widget.getClass().getDeclaredField("height");
+            field.setAccessible(true);
+            return field.getInt(widget);
+        } catch (Exception ignored) {
+        }
+        return 0;
+    }
+
+    private static void setWidgetPosition(AbstractWidget widget, int x, int y) {
+        try {
+            widget.getClass().getMethod("setPosition", int.class, int.class).invoke(widget, x, y);
+            return;
+        } catch (Exception ignored) {
+        }
+        try {
+            widget.getClass().getMethod("setX", int.class).invoke(widget, x);
+        } catch (Exception ignored) {
+        }
+        try {
+            widget.getClass().getMethod("setY", int.class).invoke(widget, y);
+        } catch (Exception ignored) {
         }
     }
 
