@@ -10,7 +10,6 @@ import com.immersiveautopilot.network.C2SRequestAircraftList;
 import com.immersiveautopilot.network.C2SRequestTowerState;
 import com.immersiveautopilot.network.C2SSavePreset;
 import com.immersiveautopilot.network.C2SSetTowerConfig;
-import com.immersiveautopilot.network.C2SSetTowerRange;
 import com.immersiveautopilot.network.C2SSendRouteToAircraft;
 import com.immersiveautopilot.network.C2SUnbindAircraft;
 import com.immersiveautopilot.route.RouteProgram;
@@ -44,7 +43,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private static final int ROW_HEIGHT = 14;
     private static final int WAYPOINT_ROWS = 6;
 
-    private static final int GRID_SIZE = 128;
+    private static final int GRID_SIZE = 110;
     private static final int SCROLLBAR_WIDTH = 10;
     private static final int SCROLLBAR_PADDING = 4;
     private static final int MIN_PANEL_WIDTH = 240;
@@ -113,7 +112,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private boolean draggingScroll = false;
     private int scrollDragStartY = 0;
     private int dragStartScroll = 0;
-    private boolean xaeroSynced = false;
     private long lastScrollUpdateMs = 0L;
     private static final long SCROLL_UPDATE_INTERVAL_MS = 80L;
     private int leftX = BASE_LEFT_X;
@@ -151,7 +149,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         this.imageWidth = Math.max(MIN_PANEL_WIDTH, Math.min(320, this.width - 16));
         this.imageHeight = Math.max(MIN_PANEL_HEIGHT, Math.min(400, this.height - 16));
         super.init();
-        xaeroSynced = false;
         int x = leftPos;
         int y = topPos;
         updateLayoutMetrics();
@@ -171,7 +168,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         addBaseWidget(towerNameField);
 
         rangeField = new EditBox(font, x + leftX, y + 64, 60, 16, Component.translatable("screen.immersive_autopilot.scan_range"));
-        rangeField.setValue("256");
+        rangeField.setValue("64");
+        rangeField.setEditable(false);
+        rangeField.active = false;
         addBaseWidget(rangeField);
 
         addBaseWidget(Button.builder(Component.translatable("screen.immersive_autopilot.refresh_list"),
@@ -267,8 +266,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     }
 
     private void refreshAircraftList() {
-        int range = parseInt(rangeField.getValue(), 256);
-        NetworkHandler.sendToServer(new C2SSetTowerRange(menu.getPos(), range));
         NetworkHandler.sendToServer(new C2SRequestAircraftList(menu.getPos()));
     }
 
@@ -569,9 +566,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             if (!towerNameField.isFocused()) {
                 towerNameField.setValue(state.getTowerName());
             }
-            if (!rangeField.isFocused()) {
-                rangeField.setValue(Integer.toString(state.getScanRange()));
-            }
+            rangeField.setValue(Integer.toString(state.getScanRange()));
             if (state.getScanRange() != mapRange) {
                 mapRange = Math.max(1, state.getScanRange());
             }
@@ -599,10 +594,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 selectedPointIndex = -1;
             }
             updateWaypointControls();
-            if (!xaeroSynced && com.immersiveautopilot.client.XaeroBridge.isAvailable()) {
-                com.immersiveautopilot.client.XaeroBridge.syncTemporaryWaypoints(activeRoute, null);
-                xaeroSynced = true;
-            }
         }
 
         List<AircraftSnapshot> newList = ClientCache.getAircraftList(menu.getPos());
@@ -635,8 +626,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         if (pageMode == PageMode.BASE) {
             drawAircraftList(graphics);
         } else {
-            drawRouteList(graphics);
             drawGrid(graphics, partialTick);
+            drawRouteList(graphics);
         }
 
         super.render(graphics, mouseX, mouseY, partialTick);

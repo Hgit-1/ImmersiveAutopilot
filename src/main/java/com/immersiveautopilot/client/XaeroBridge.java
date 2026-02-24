@@ -24,14 +24,29 @@ public final class XaeroBridge {
     }
 
     public static void syncTemporaryWaypoints(RouteProgram primary, RouteProgram backup) {
+        syncTemporaryWaypoints(primary, backup, 0, 0);
+    }
+
+    public static void syncTemporaryWaypoints(RouteProgram primary, RouteProgram backup, int primaryCompleted, int backupCompleted) {
         try {
             Object set = getCurrentWaypointSet();
             if (set == null) {
                 return;
             }
             clearOurTemporaryWaypoints(set);
-            addProgramWaypoints(set, primary, "P", "AQUA");
-            addProgramWaypoints(set, backup, "B", "GOLD");
+            addProgramWaypoints(set, primary, "P", "AQUA", primaryCompleted, "GREEN");
+            addProgramWaypoints(set, backup, "B", "PURPLE", backupCompleted, "GREEN");
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static void clearTemporaryWaypoints() {
+        try {
+            Object set = getCurrentWaypointSet();
+            if (set == null) {
+                return;
+            }
+            clearOurTemporaryWaypoints(set);
         } catch (Throwable ignored) {
         }
     }
@@ -121,7 +136,7 @@ public final class XaeroBridge {
         }
     }
 
-    private static void addProgramWaypoints(Object set, RouteProgram program, String labelPrefix, String colorName) throws Exception {
+    private static void addProgramWaypoints(Object set, RouteProgram program, String labelPrefix, String colorName, int completedCount, String completedColor) throws Exception {
         if (program == null) {
             return;
         }
@@ -131,6 +146,8 @@ public final class XaeroBridge {
 
         @SuppressWarnings("unchecked")
         Object color = Enum.valueOf((Class<? extends Enum>) colorClass, colorName);
+        @SuppressWarnings("unchecked")
+        Object completeColor = Enum.valueOf((Class<? extends Enum>) colorClass, completedColor);
         @SuppressWarnings("unchecked")
         Object purpose = Enum.valueOf((Class<? extends Enum>) purposeClass, "NORMAL");
 
@@ -144,6 +161,8 @@ public final class XaeroBridge {
 
         int index = 1;
         for (RouteWaypoint wp : program.getWaypoints()) {
+            boolean completed = index <= completedCount;
+            Object useColor = completed ? completeColor : color;
             String name = NAME_PREFIX + labelPrefix + "-" + program.getName() + "-" + index;
             String initials = labelPrefix + index;
             Object xaeroWp = ctor.newInstance(
@@ -152,7 +171,7 @@ public final class XaeroBridge {
                     wp.getPos().getZ(),
                     name,
                     initials,
-                    color,
+                    useColor,
                     purpose,
                     true,
                     true

@@ -1,7 +1,11 @@
 {
   "block.immersive_autopilot.tower": "塔台",
+  "block.immersive_autopilot.radar": "雷达",
   "itemGroup.immersive_autopilot": "沉浸式自动驾驶",
+  "item.immersive_autopilot.radar_lens": "雷达透镜",
+  "item.immersive_autopilot.signal_amplifier": "信号放大器",
   "screen.immersive_autopilot.tower": "塔台",
+  "screen.immersive_autopilot.radar": "雷达",
   "screen.immersive_autopilot.route_editor": "航路编辑",
   "screen.immersive_autopilot.scan_range": "扫描范围",
   "screen.immersive_autopilot.bound_aircraft": "已绑定飞机",

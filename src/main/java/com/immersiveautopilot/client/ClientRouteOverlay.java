@@ -21,16 +21,13 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 @EventBusSubscriber(modid = ImmersiveAutopilot.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class ClientRouteOverlay {
     private static final int PRIMARY_COLOR = 0xFF4FC3F7;
-    private static final int BACKUP_COLOR = 0xFF9AA7B0;
+    private static final int BACKUP_COLOR = 0xFFB066FF;
 
     private ClientRouteOverlay() {
     }
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (XaeroBridge.isAvailable()) {
-            return;
-        }
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             return;
         }
@@ -45,6 +42,8 @@ public final class ClientRouteOverlay {
         RouteProgram primary = ClientRouteCache.getPrimary(vehicle.getId());
         RouteProgram backup = ClientRouteCache.getBackup(vehicle.getId());
         if (primary == null && backup == null) {
+            // Still render guidance arrows/circles if active.
+            ClientRouteGuidance.renderWorld(event.getPoseStack(), mc.renderBuffers().bufferSource(), mc.gameRenderer.getMainCamera().getPosition(), player.level());
             return;
         }
         Camera camera = mc.gameRenderer.getMainCamera();
@@ -56,12 +55,16 @@ public final class ClientRouteOverlay {
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
 
-        if (primary != null) {
-            renderRoute(pose, buffers, font, camPos, player.level(), primary, PRIMARY_COLOR);
+        boolean xaeroPresent = XaeroBridge.isAvailable();
+        if (!xaeroPresent) {
+            if (primary != null) {
+                renderRoute(pose, buffers, font, camPos, player.level(), primary, PRIMARY_COLOR);
+            }
+            if (backup != null) {
+                renderRoute(pose, buffers, font, camPos, player.level(), backup, BACKUP_COLOR);
+            }
         }
-        if (backup != null) {
-            renderRoute(pose, buffers, font, camPos, player.level(), backup, BACKUP_COLOR);
-        }
+        ClientRouteGuidance.renderWorld(pose, buffers, camPos, player.level());
 
         buffers.endBatch();
         RenderSystem.disableBlend();

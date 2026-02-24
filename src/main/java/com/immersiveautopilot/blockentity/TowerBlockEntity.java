@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class TowerBlockEntity extends BlockEntity implements MenuProvider {
-    public static final int DEFAULT_SCAN_RANGE = 256;
+    public static final int DEFAULT_SCAN_RANGE = 64;
     public static final int MAX_SCAN_RANGE = 1024;
 
     private int scanRange = DEFAULT_SCAN_RANGE;
@@ -47,6 +47,7 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     private RouteProgram activeRoute = new RouteProgram("default");
     private final Map<String, RouteProgram> presets = new HashMap<>();
     private final Map<UUID, Boolean> insideAirspace = new HashMap<>();
+    private final Map<UUID, UUID> activePilots = new HashMap<>();
     private boolean wasPowered = false;
 
     public TowerBlockEntity(BlockPos pos, BlockState state) {
@@ -68,17 +69,8 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public void setScanRange(int scanRange) {
-        int max = MAX_SCAN_RANGE;
-        int min = 1;
-        WorldConfigData config = getWorldConfig();
-        if (config != null) {
-            max = config.maxScanRange;
-        }
-        int clamped = Math.max(min, Math.min(max, scanRange));
-        if (this.scanRange != clamped) {
-            this.scanRange = clamped;
-            setChanged();
-        }
+        this.scanRange = computeScanRange();
+        setChanged();
     }
 
     @Nullable
@@ -176,51 +168,25 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         if (level == null) {
             return;
         }
+        scanRange = computeScanRange();
         if (worldConfig == null && level instanceof ServerLevel serverLevel) {
             worldConfig = WorldConfig.get(serverLevel);
-            if (scanRange == DEFAULT_SCAN_RANGE) {
-                int configured = worldConfig.defaultScanRange > 0 ? worldConfig.defaultScanRange : worldConfig.scanRange;
-                scanRange = configured > 0 ? configured : DEFAULT_SCAN_RANGE;
-            }
+            // Scan range is fixed to base + radar bonuses.
         }
         boolean powered = isPowered();
         if (!powered) {
             if (wasPowered) {
                 insideAirspace.clear();
+                activePilots.clear();
             }
             wasPowered = false;
             return;
         }
         if (!wasPowered) {
             wasPowered = true;
-            for (UUID uuid : sendAutoRequests()) {
-                insideAirspace.put(uuid, true);
-            }
+            handleAirspaceMessages();
         }
         handleAirspaceMessages();
-    }
-
-    private java.util.Set<UUID> sendAutoRequests() {
-        java.util.Set<UUID> seen = new java.util.HashSet<>();
-        if (level == null) {
-            return seen;
-        }
-        List<RouteEntry> entries = getRouteEntries();
-        for (VehicleEntity vehicle : getTargetsInRange()) {
-            seen.add(vehicle.getUUID());
-            if (vehicle.getControllingPassenger() instanceof ServerPlayer pilot) {
-                if (!entries.isEmpty()) {
-                    RouteOfferManager.createOffer(pilot.getUUID(), null, vehicle.getId(), entries, level.getGameTime());
-                    immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
-                            new S2CRouteOfferToPilot(vehicle.getId(), towerName, entries), pilot);
-                }
-                String msg = formatText(autoRequestText);
-                if (!msg.isBlank()) {
-                    pilot.displayClientMessage(Component.literal(msg), false);
-                }
-            }
-        }
-        return seen;
     }
 
     private void handleAirspaceMessages() {
@@ -237,13 +203,11 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
                     if (!msg.isBlank()) {
                         pilot.displayClientMessage(Component.literal(msg), false);
                     }
-                    if (!entries.isEmpty()) {
-                        RouteOfferManager.createOffer(pilot.getUUID(), null, vehicle.getId(), entries, level.getGameTime());
-                        immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
-                                new S2CRouteOfferToPilot(vehicle.getId(), towerName, entries), pilot);
-                    }
+                    sendRouteOfferIfNeeded(vehicle, pilot, entries, true);
                 }
                 insideAirspace.put(vehicle.getUUID(), true);
+            } else if (vehicle.getControllingPassenger() instanceof ServerPlayer pilot) {
+                sendRouteOfferIfNeeded(vehicle, pilot, entries, false);
             }
         }
         insideAirspace.keySet().removeIf(uuid -> {
@@ -256,14 +220,71 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
                     vehicle = v;
                 }
             }
-            if (vehicle != null && vehicle.getControllingPassenger() instanceof ServerPlayer pilot) {
-                String msg = formatText(exitText);
-                if (!msg.isBlank()) {
-                    pilot.displayClientMessage(Component.literal(msg), false);
+            UUID lastPilot = activePilots.remove(uuid);
+            if (lastPilot != null && level instanceof ServerLevel serverLevel) {
+                ServerPlayer pilot = serverLevel.getPlayerByUUID(lastPilot);
+                if (pilot != null) {
+                    String msg = formatText(exitText);
+                    if (!msg.isBlank()) {
+                        pilot.displayClientMessage(Component.literal(msg), false);
+                    }
+                    immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
+                            new com.immersiveautopilot.network.S2CAirspaceState(vehicle != null ? vehicle.getId() : -1, false),
+                            pilot);
                 }
             }
             return true;
         });
+    }
+
+    private void sendRouteOfferIfNeeded(VehicleEntity vehicle, ServerPlayer pilot, List<RouteEntry> entries, boolean entering) {
+        UUID vehicleId = vehicle.getUUID();
+        UUID pilotId = pilot.getUUID();
+        UUID lastPilot = activePilots.get(vehicleId);
+        boolean pilotChanged = lastPilot == null || !lastPilot.equals(pilotId);
+        if (pilotChanged) {
+            activePilots.put(vehicleId, pilotId);
+            if (!entries.isEmpty()) {
+                RouteOfferManager.createOffer(pilotId, null, vehicle.getId(), entries, level.getGameTime());
+                immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
+                        new S2CRouteOfferToPilot(vehicle.getId(), towerName, entries), pilot);
+            }
+            immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
+                    new com.immersiveautopilot.network.S2CAirspaceState(vehicle.getId(), true), pilot);
+            if (entering) {
+                String msg = formatText(autoRequestText);
+                if (!msg.isBlank()) {
+                    pilot.displayClientMessage(Component.literal(msg), false);
+                }
+            }
+        } else if (entering) {
+            immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
+                    new com.immersiveautopilot.network.S2CAirspaceState(vehicle.getId(), true), pilot);
+        }
+    }
+
+    private int computeScanRange() {
+        int base = DEFAULT_SCAN_RANGE;
+        int bonus = 0;
+        if (level != null) {
+            BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dx = -2; dx <= 2; dx++) {
+                    for (int dz = -2; dz <= 2; dz++) {
+                        mutable.set(worldPosition.getX() + dx, worldPosition.getY() + dy, worldPosition.getZ() + dz);
+                        if (level.getBlockEntity(mutable) instanceof com.immersiveautopilot.blockentity.RadarBlockEntity radar) {
+                            bonus += radar.getRangeBonus();
+                        }
+                    }
+                }
+            }
+        }
+        int max = MAX_SCAN_RANGE;
+        WorldConfigData config = getWorldConfig();
+        if (config != null) {
+            max = config.maxScanRange;
+        }
+        return Math.max(1, Math.min(max, base + bonus));
     }
 
     private Iterable<VehicleEntity> getTargetsInRange() {

@@ -12,6 +12,8 @@ public final class ModBlockEntities {
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TowerBlockEntity>> TOWER = BLOCK_ENTITIES.register("tower",
             () -> BlockEntityType.Builder.of(TowerBlockEntity::new, ModBlocks.TOWER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RadarBlockEntity>> RADAR = BLOCK_ENTITIES.register("radar",
+            () -> BlockEntityType.Builder.of(RadarBlockEntity::new, ModBlocks.RADAR.get()).build(null));
 
     private ModBlockEntities() {
     }

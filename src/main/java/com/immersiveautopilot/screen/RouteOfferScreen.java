@@ -44,6 +44,11 @@ public class RouteOfferScreen extends Screen {
                             selectedPrimary >= 0 ? entries.get(selectedPrimary).program() : null,
                             selectedBackup >= 0 ? entries.get(selectedBackup).program() : null
                     );
+                    com.immersiveautopilot.client.ClientRouteGuidance.acceptRoutes(
+                            vehicleId,
+                            selectedPrimary >= 0 ? entries.get(selectedPrimary).program() : null,
+                            selectedBackup >= 0 ? entries.get(selectedBackup).program() : null
+                    );
                     NetworkHandler.sendToServer(new C2SPilotRouteDecision(vehicleId, true, primary, backup));
                     Minecraft.getInstance().setScreen(null);
                 }).bounds(centerX - 90, centerY + 70, 80, 20).build();

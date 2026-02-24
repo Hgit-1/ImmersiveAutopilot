@@ -13,6 +13,12 @@ public final class ModItems {
 
     public static final DeferredHolder<Item, Item> TOWER = ITEMS.register("tower",
             () -> new BlockItem(ModBlocks.TOWER.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> RADAR = ITEMS.register("radar",
+            () -> new BlockItem(ModBlocks.RADAR.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> RADAR_LENS = ITEMS.register("radar_lens",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> SIGNAL_AMPLIFIER = ITEMS.register("signal_amplifier",
+            () -> new Item(new Item.Properties()));
 
     private ModItems() {
     }

@@ -60,6 +60,9 @@ public class S2CRouteOfferToPilot extends Message {
             if (Minecraft.getInstance().player.getVehicle() == null || Minecraft.getInstance().player.getVehicle().getId() != vehicleId) {
                 return;
             }
+            if (com.immersiveautopilot.client.ClientRouteGuidance.shouldSuppressOffers(vehicleId)) {
+                return;
+            }
             Minecraft.getInstance().setScreen(new RouteOfferScreen(vehicleId, operatorName, entries));
         });
     }

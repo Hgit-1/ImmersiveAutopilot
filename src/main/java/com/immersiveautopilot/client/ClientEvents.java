@@ -2,6 +2,7 @@ package com.immersiveautopilot.client;
 
 import com.immersiveautopilot.ImmersiveAutopilot;
 import com.immersiveautopilot.menu.ModMenus;
+import com.immersiveautopilot.screen.RadarScreen;
 import com.immersiveautopilot.screen.TowerScreen;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -16,5 +17,6 @@ public final class ClientEvents {
     @SubscribeEvent
     public static void onRegisterScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenus.TOWER_MENU.get(), TowerScreen::new);
+        event.register(ModMenus.RADAR_MENU.get(), RadarScreen::new);
     }
 }

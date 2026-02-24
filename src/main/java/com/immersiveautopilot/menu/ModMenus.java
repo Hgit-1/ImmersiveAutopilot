@@ -12,6 +12,8 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<TowerMenu>> TOWER_MENU = MENUS.register("tower",
             () -> IMenuTypeExtension.create(TowerMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<RadarMenu>> RADAR_MENU = MENUS.register("radar",
+            () -> IMenuTypeExtension.create(RadarMenu::new));
 
     private ModMenus() {
     }

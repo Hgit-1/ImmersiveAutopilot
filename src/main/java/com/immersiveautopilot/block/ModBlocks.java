@@ -13,6 +13,8 @@ public final class ModBlocks {
 
     public static final DeferredHolder<Block, Block> TOWER = BLOCKS.register("tower",
             () -> new TowerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0f).requiresCorrectToolForDrops()));
+    public static final DeferredHolder<Block, Block> RADAR = BLOCKS.register("radar",
+            () -> new RadarBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(2.5f).requiresCorrectToolForDrops()));
 
     private ModBlocks() {
     }
