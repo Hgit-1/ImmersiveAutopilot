@@ -881,7 +881,13 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 } else {
                     BlockState sliceState = level.getBlockState(mutable);
                     if (sliceState.isAir()) {
-                        mapColors[dx][dz] = 0xFF000000;
+                        if (topY > radarY) {
+                            mapColors[dx][dz] = 0xFF000000;
+                        } else {
+                            BlockState topState = level.getBlockState(surface);
+                            int color = topState.getMapColor(level, surface).col;
+                            mapColors[dx][dz] = 0xFF000000 | color;
+                        }
                     } else {
                         int color = sliceState.getMapColor(level, mutable).col;
                         mapColors[dx][dz] = 0xFF000000 | color;
