@@ -183,6 +183,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             gridCenterZ = menu.getPos().getZ();
             gridDimension = player.level().dimension().location();
         }
+        mapDirty = true;
+        mapBuildRow = 0;
 
         NetworkHandler.sendToServer(new C2SRequestTowerState(menu.getPos()));
         refreshAircraftList();
@@ -376,7 +378,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
+        // Avoid background blur from other UI mods.
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF0F1114);
 
         drawAircraftList(graphics);
@@ -533,7 +535,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             return;
         }
         double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
-        int rowsPerUpdate = 8;
+        int rowsPerUpdate = 4;
         int endRow = Math.min(GRID_SIZE, mapBuildRow + rowsPerUpdate);
         net.minecraft.core.BlockPos.MutableBlockPos mutable = new net.minecraft.core.BlockPos.MutableBlockPos();
         for (int dz = mapBuildRow; dz < endRow; dz++) {
@@ -542,7 +544,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 int worldX = gridCenterX + (int) Math.round((dx - GRID_SIZE / 2.0) * blocksPerPixel);
                 mutable.set(worldX, 0, worldZ);
                 if (!level.hasChunkAt(mutable)) {
-                    mapColors[dx][dz] = 0xFF000000;
+                    mapColors[dx][dz] = 0xFF1B1F26;
                     continue;
                 }
                 net.minecraft.core.BlockPos surface = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, mutable);

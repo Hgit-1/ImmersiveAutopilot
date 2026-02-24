@@ -39,6 +39,11 @@ public class RouteOfferScreen extends Screen {
                 button -> {
                     String primary = selectedPrimary >= 0 ? entries.get(selectedPrimary).name() : "";
                     String backup = selectedBackup >= 0 ? entries.get(selectedBackup).name() : "";
+                    com.immersiveautopilot.client.ClientRouteCache.setRoutes(
+                            vehicleId,
+                            selectedPrimary >= 0 ? entries.get(selectedPrimary).program() : null,
+                            selectedBackup >= 0 ? entries.get(selectedBackup).program() : null
+                    );
                     NetworkHandler.sendToServer(new C2SPilotRouteDecision(vehicleId, true, primary, backup));
                     Minecraft.getInstance().setScreen(null);
                 }).bounds(centerX - 90, centerY + 70, 80, 20).build();
@@ -55,7 +60,7 @@ public class RouteOfferScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics, mouseX, mouseY, partialTick);
+        // Avoid background blur from other UI mods.
         int panelLeft = this.width / 2 - 140;
         int panelRight = this.width / 2 + 140;
         int panelTop = this.height / 2 - 100;
