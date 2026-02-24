@@ -469,6 +469,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             return;
         }
         Level level = player.level();
+        updateMapCache(level);
 
         for (int dz = 0; dz < GRID_SIZE; dz++) {
             for (int dx = 0; dx < GRID_SIZE; dx++) {
