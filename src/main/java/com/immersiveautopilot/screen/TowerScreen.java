@@ -787,30 +787,26 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int x1 = x0 + gridSize;
         int y1 = y0 + gridSize;
 
-        boolean renderedXaero = com.immersiveautopilot.client.XaeroBridge.renderMinimap(graphics, x0, y0, gridSize, gridSize, partialTick, true, true);
-
         Player player = Minecraft.getInstance().player;
         if (player == null) {
             return;
         }
         Level level = player.level();
-        if (!renderedXaero) {
-            updateMapCache(level);
+        updateMapCache(level);
 
-            for (int dz = 0; dz < gridSize; dz++) {
-                for (int dx = 0; dx < gridSize; dx++) {
-                    int color = mapColors[dx][dz];
-                    graphics.fill(x0 + dx, y0 + dz, x0 + dx + 1, y0 + dz + 1, color);
-                }
+        for (int dz = 0; dz < gridSize; dz++) {
+            for (int dx = 0; dx < gridSize; dx++) {
+                int color = mapColors[dx][dz];
+                graphics.fill(x0 + dx, y0 + dz, x0 + dx + 1, y0 + dz + 1, color);
             }
-
-            for (int i = 0; i <= gridSize; i += 16) {
-                graphics.hLine(x0, x1, y0 + i, 0x5522262B);
-                graphics.vLine(x0 + i, y0, y1, 0x5522262B);
-            }
-            graphics.hLine(x0, x1, y0 + gridSize / 2, 0xFF2F343A);
-            graphics.vLine(x0 + gridSize / 2, y0, y1, 0xFF2F343A);
         }
+
+        for (int i = 0; i <= gridSize; i += 16) {
+            graphics.hLine(x0, x1, y0 + i, 0x5522262B);
+            graphics.vLine(x0 + i, y0, y1, 0x5522262B);
+        }
+        graphics.hLine(x0, x1, y0 + gridSize / 2, 0xFF2F343A);
+        graphics.vLine(x0 + gridSize / 2, y0, y1, 0xFF2F343A);
         List<RouteWaypoint> points = activeRoute.getWaypoints();
         for (com.immersiveautopilot.route.RouteLink link : activeRoute.getLinks()) {
             if (link.from() < 0 || link.to() < 0 || link.from() >= points.size() || link.to() >= points.size()) {
@@ -865,26 +861,68 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         double blocksPerPixel = (mapRange * 2.0) / gridSize;
         int rowsPerUpdate = 4;
         int endRow = Math.min(gridSize, mapBuildRow + rowsPerUpdate);
+        int radarY = resolveRadarY(level);
         net.minecraft.core.BlockPos.MutableBlockPos mutable = new net.minecraft.core.BlockPos.MutableBlockPos();
         for (int dz = mapBuildRow; dz < endRow; dz++) {
             int worldZ = gridCenterZ + (int) Math.round((dz - gridSize / 2.0) * blocksPerPixel);
             for (int dx = 0; dx < gridSize; dx++) {
                 int worldX = gridCenterX + (int) Math.round((dx - gridSize / 2.0) * blocksPerPixel);
-                mutable.set(worldX, 0, worldZ);
+                mutable.set(worldX, radarY, worldZ);
                 if (!level.hasChunkAt(mutable)) {
                     mapColors[dx][dz] = 0xFF1B1F26;
                     continue;
                 }
                 net.minecraft.core.BlockPos surface = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, mutable);
-                BlockState state = level.getBlockState(surface);
-                int color = state.getMapColor(level, surface).col;
-                mapColors[dx][dz] = 0xFF000000 | color;
+                int topY = surface.getY();
+                if (topY < radarY) {
+                    BlockState topState = level.getBlockState(surface);
+                    int color = topState.getMapColor(level, surface).col;
+                    mapColors[dx][dz] = 0xFF000000 | darken(color, radarY - topY);
+                } else {
+                    BlockState sliceState = level.getBlockState(mutable);
+                    if (sliceState.isAir()) {
+                        mapColors[dx][dz] = 0xFF000000;
+                    } else {
+                        int color = sliceState.getMapColor(level, mutable).col;
+                        mapColors[dx][dz] = 0xFF000000 | color;
+                    }
+                }
             }
         }
         mapBuildRow = endRow;
         if (mapBuildRow >= gridSize) {
             mapDirty = false;
         }
+    }
+
+    private int resolveRadarY(Level level) {
+        int y = menu.getPos().getY();
+        int best = y;
+        int bestBonus = -1;
+        net.minecraft.core.BlockPos.MutableBlockPos mutable = new net.minecraft.core.BlockPos.MutableBlockPos();
+        for (int dy = -2; dy <= 2; dy++) {
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    mutable.set(menu.getPos().getX() + dx, menu.getPos().getY() + dy, menu.getPos().getZ() + dz);
+                    if (level.getBlockEntity(mutable) instanceof com.immersiveautopilot.blockentity.RadarBlockEntity radar) {
+                        int bonus = radar.getRangeBonus();
+                        if (bonus > bestBonus) {
+                            bestBonus = bonus;
+                            best = mutable.getY();
+                        }
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
+    private int darken(int color, int delta) {
+        double factor = 1.0 - Math.min(0.6, delta / 96.0);
+        int r = (int) Math.max(0, Math.min(255, ((color >> 16) & 0xFF) * factor));
+        int g = (int) Math.max(0, Math.min(255, ((color >> 8) & 0xFF) * factor));
+        int b = (int) Math.max(0, Math.min(255, (color & 0xFF) * factor));
+        return (r << 16) | (g << 8) | b;
     }
 
     private void drawArrow(GuiGraphics graphics, int x0, int y0, int x1, int y1, int color) {
