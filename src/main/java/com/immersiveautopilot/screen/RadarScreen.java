@@ -21,7 +21,7 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
+        renderBackground(graphics, mouseX, mouseY, partialTick);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
         graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFFFF, false);

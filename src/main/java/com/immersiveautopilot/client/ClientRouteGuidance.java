@@ -115,7 +115,9 @@ public final class ClientRouteGuidance {
         active = null;
         completedCount = 0;
         XaeroBridge.clearTemporaryWaypoints();
-        ClientRouteCache.setRoutes(null, null);
+        if (activeVehicleId != -1) {
+            ClientRouteCache.setRoutes(activeVehicleId, null, null);
+        }
     }
 
     public static void renderWorld(PoseStack pose, MultiBufferSource buffers, Vec3 camPos, Level level) {
@@ -155,12 +157,13 @@ public final class ClientRouteGuidance {
 
     private static void drawCircle(PoseStack pose, MultiBufferSource buffers, Vec3 camPos, Vec3 center, double radius, int color) {
         int segments = 32;
-        float r = ((color >> 16) & 0xFF) / 255f;
-        float g = ((color >> 8) & 0xFF) / 255f;
-        float b = (color & 0xFF) / 255f;
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
         var consumer = buffers.getBuffer(RenderType.lines());
         pose.pushPose();
         pose.translate(center.x - camPos.x, center.y - camPos.y + 0.1, center.z - camPos.z);
+        var matrix = pose.last().pose();
         for (int i = 0; i < segments; i++) {
             double a0 = (2 * Math.PI * i) / segments;
             double a1 = (2 * Math.PI * (i + 1)) / segments;
@@ -168,21 +171,22 @@ public final class ClientRouteGuidance {
             float z0 = (float) (Math.sin(a0) * radius);
             float x1 = (float) (Math.cos(a1) * radius);
             float z1 = (float) (Math.sin(a1) * radius);
-            consumer.vertex(pose.last().pose(), x0, 0f, z0).color(r, g, b, 1f).normal(0f, 1f, 0f).endVertex();
-            consumer.vertex(pose.last().pose(), x1, 0f, z1).color(r, g, b, 1f).normal(0f, 1f, 0f).endVertex();
+            consumer.addVertex(matrix, x0, 0f, z0).setColor(r, g, b, 255).setNormal(0f, 1f, 0f);
+            consumer.addVertex(matrix, x1, 0f, z1).setColor(r, g, b, 255).setNormal(0f, 1f, 0f);
         }
         pose.popPose();
     }
 
     private static void drawArrow(PoseStack pose, MultiBufferSource buffers, Vec3 camPos, Vec3 from, Vec3 to, int color) {
-        float r = ((color >> 16) & 0xFF) / 255f;
-        float g = ((color >> 8) & 0xFF) / 255f;
-        float b = (color & 0xFF) / 255f;
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
         var consumer = buffers.getBuffer(RenderType.lines());
         pose.pushPose();
         pose.translate(-camPos.x, -camPos.y, -camPos.z);
-        consumer.vertex(pose.last().pose(), (float) from.x, (float) from.y, (float) from.z).color(r, g, b, 1f).normal(0f, 1f, 0f).endVertex();
-        consumer.vertex(pose.last().pose(), (float) to.x, (float) to.y, (float) to.z).color(r, g, b, 1f).normal(0f, 1f, 0f).endVertex();
+        var matrix = pose.last().pose();
+        consumer.addVertex(matrix, (float) from.x, (float) from.y, (float) from.z).setColor(r, g, b, 255).setNormal(0f, 1f, 0f);
+        consumer.addVertex(matrix, (float) to.x, (float) to.y, (float) to.z).setColor(r, g, b, 255).setNormal(0f, 1f, 0f);
 
         Vec3 dir = to.subtract(from).normalize();
         Vec3 left = dir.yRot((float) Math.toRadians(150)).scale(2.0);
@@ -190,10 +194,10 @@ public final class ClientRouteGuidance {
         Vec3 head = to;
         Vec3 p1 = head.add(left);
         Vec3 p2 = head.add(right);
-        consumer.vertex(pose.last().pose(), (float) head.x, (float) head.y, (float) head.z).color(r, g, b, 1f).normal(0f, 1f, 0f).endVertex();
-        consumer.vertex(pose.last().pose(), (float) p1.x, (float) p1.y, (float) p1.z).color(r, g, b, 1f).normal(0f, 1f, 0f).endVertex();
-        consumer.vertex(pose.last().pose(), (float) head.x, (float) head.y, (float) head.z).color(r, g, b, 1f).normal(0f, 1f, 0f).endVertex();
-        consumer.vertex(pose.last().pose(), (float) p2.x, (float) p2.y, (float) p2.z).color(r, g, b, 1f).normal(0f, 1f, 0f).endVertex();
+        consumer.addVertex(matrix, (float) head.x, (float) head.y, (float) head.z).setColor(r, g, b, 255).setNormal(0f, 1f, 0f);
+        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z).setColor(r, g, b, 255).setNormal(0f, 1f, 0f);
+        consumer.addVertex(matrix, (float) head.x, (float) head.y, (float) head.z).setColor(r, g, b, 255).setNormal(0f, 1f, 0f);
+        consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z).setColor(r, g, b, 255).setNormal(0f, 1f, 0f);
         pose.popPose();
     }
 }

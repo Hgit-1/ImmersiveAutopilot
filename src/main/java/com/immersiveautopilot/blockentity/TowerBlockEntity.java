@@ -222,8 +222,8 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
             }
             UUID lastPilot = activePilots.remove(uuid);
             if (lastPilot != null && level instanceof ServerLevel serverLevel) {
-                ServerPlayer pilot = serverLevel.getPlayerByUUID(lastPilot);
-                if (pilot != null) {
+                Player found = serverLevel.getPlayerByUUID(lastPilot);
+                if (found instanceof ServerPlayer pilot) {
                     String msg = formatText(exitText);
                     if (!msg.isBlank()) {
                         pilot.displayClientMessage(Component.literal(msg), false);
