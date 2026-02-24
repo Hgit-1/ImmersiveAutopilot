@@ -18,7 +18,7 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 
-@EventBusSubscriber(modid = ImmersiveAutopilot.MOD_ID, bus = EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = ImmersiveAutopilot.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class ClientRouteOverlay {
     private static final int PRIMARY_COLOR = 0xFF4FC3F7;
     private static final int BACKUP_COLOR = 0xFF9AA7B0;
