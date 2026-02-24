@@ -28,6 +28,9 @@ public final class ClientRouteOverlay {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
+        if (XaeroBridge.isAvailable()) {
+            return;
+        }
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             return;
         }

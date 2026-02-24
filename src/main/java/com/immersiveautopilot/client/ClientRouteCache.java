@@ -23,6 +23,7 @@ public final class ClientRouteCache {
         } else {
             BACKUP.remove(vehicleId);
         }
+        XaeroBridge.syncTemporaryWaypoints(primary, backup);
     }
 
     public static RouteProgram getPrimary(int vehicleId) {
