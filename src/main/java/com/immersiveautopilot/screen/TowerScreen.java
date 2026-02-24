@@ -43,14 +43,14 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private static final int ROW_HEIGHT = 14;
     private static final int WAYPOINT_ROWS = 6;
 
-    private static final int GRID_SIZE = 96;
+    private static final int GRID_SIZE = 80;
     private static final int SCROLLBAR_WIDTH = 10;
     private static final int SCROLLBAR_PADDING = 4;
     private static final int MIN_PANEL_WIDTH = 240;
     private static final int MIN_PANEL_HEIGHT = 260;
     private static final int BASE_LEFT_X = 12;
     private static final int BASE_RIGHT_X = 170;
-    private static final int BASE_GRID_Y = 110;
+    private static final int BASE_GRID_Y = 200;
 
     private EditBox towerNameField;
     private EditBox rangeField;
@@ -310,13 +310,13 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             rightX = leftX + 120;
         }
 
-        gridX = leftX;
-        gridY = BASE_GRID_Y;
-
         rightColumnWidth = Math.max(110, contentWidth - rightX - 8);
         wideFieldWidth = Math.max(160, rightColumnWidth);
         leftListWidth = Math.max(110, rightX - leftX - 12);
         rightListWidth = Math.max(110, rightColumnWidth);
+
+        gridX = rightX + Math.max(0, (rightColumnWidth - GRID_SIZE) / 2);
+        gridY = BASE_GRID_Y;
     }
 
     private int getContentX0() {
@@ -775,30 +775,30 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int x1 = x0 + GRID_SIZE;
         int y1 = y0 + GRID_SIZE;
 
-        if (com.immersiveautopilot.client.XaeroBridge.renderMinimap(graphics, x0, y0, GRID_SIZE, GRID_SIZE, partialTick)) {
-            return;
-        }
+        boolean renderedXaero = com.immersiveautopilot.client.XaeroBridge.renderMinimap(graphics, x0, y0, GRID_SIZE, GRID_SIZE, partialTick, true, true);
 
         Player player = Minecraft.getInstance().player;
         if (player == null) {
             return;
         }
         Level level = player.level();
-        updateMapCache(level);
+        if (!renderedXaero) {
+            updateMapCache(level);
 
-        for (int dz = 0; dz < GRID_SIZE; dz++) {
-            for (int dx = 0; dx < GRID_SIZE; dx++) {
-                int color = mapColors[dx][dz];
-                graphics.fill(x0 + dx, y0 + dz, x0 + dx + 1, y0 + dz + 1, color);
+            for (int dz = 0; dz < GRID_SIZE; dz++) {
+                for (int dx = 0; dx < GRID_SIZE; dx++) {
+                    int color = mapColors[dx][dz];
+                    graphics.fill(x0 + dx, y0 + dz, x0 + dx + 1, y0 + dz + 1, color);
+                }
             }
-        }
 
-        for (int i = 0; i <= GRID_SIZE; i += 16) {
-            graphics.hLine(x0, x1, y0 + i, 0x5522262B);
-            graphics.vLine(x0 + i, y0, y1, 0x5522262B);
+            for (int i = 0; i <= GRID_SIZE; i += 16) {
+                graphics.hLine(x0, x1, y0 + i, 0x5522262B);
+                graphics.vLine(x0 + i, y0, y1, 0x5522262B);
+            }
+            graphics.hLine(x0, x1, y0 + GRID_SIZE / 2, 0xFF2F343A);
+            graphics.vLine(x0 + GRID_SIZE / 2, y0, y1, 0xFF2F343A);
         }
-        graphics.hLine(x0, x1, y0 + GRID_SIZE / 2, 0xFF2F343A);
-        graphics.vLine(x0 + GRID_SIZE / 2, y0, y1, 0xFF2F343A);
         List<RouteWaypoint> points = activeRoute.getWaypoints();
         for (com.immersiveautopilot.route.RouteLink link : activeRoute.getLinks()) {
             if (link.from() < 0 || link.to() < 0 || link.from() >= points.size() || link.to() >= points.size()) {
