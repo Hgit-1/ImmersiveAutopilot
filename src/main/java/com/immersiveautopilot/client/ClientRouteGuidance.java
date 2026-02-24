@@ -15,6 +15,7 @@ import java.util.List;
 public final class ClientRouteGuidance {
     private static final double TRIGGER_RADIUS = 25.0;
     private static final double TRIGGER_RADIUS_SQ = TRIGGER_RADIUS * TRIGGER_RADIUS;
+    private static final double TRIGGER_HEIGHT_TOLERANCE = 10.0;
     private static final int PRIMARY_COLOR = 0xFF4FC3F7;
     private static final int BACKUP_COLOR = 0xFFB066FF;
     private static final int COMPLETE_COLOR = 0xFF53C653;
@@ -91,8 +92,11 @@ public final class ClientRouteGuidance {
         Vec3 pos = player.getVehicle().position();
         double dx = pos.x - target.getPos().getX();
         double dy = pos.y - target.getPos().getY();
+        if (Math.abs(dy) > TRIGGER_HEIGHT_TOLERANCE) {
+            return;
+        }
         double dz = pos.z - target.getPos().getZ();
-        double distSq = dx * dx + dy * dy + dz * dz;
+        double distSq = dx * dx + dz * dz;
         if (distSq <= TRIGGER_RADIUS_SQ) {
             completedCount++;
             if (completedCount >= points.size()) {

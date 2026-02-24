@@ -27,11 +27,13 @@ public class RadarMenu extends AbstractContainerMenu {
 
         int startX = 62;
         int startY = 20;
-        for (int i = 0; i < 3; i++) {
-            addSlot(new Slot(radar, i, startX + i * 18, startY));
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                addSlot(new Slot(radar, col + row * 3, startX + col * 18, startY + row * 18));
+            }
         }
 
-        int invY = 54;
+        int invY = 94;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, invY + row * 18));
@@ -66,7 +68,7 @@ public class RadarMenu extends AbstractContainerMenu {
         }
         ItemStack stack = slot.getItem();
         result = stack.copy();
-        int radarSlots = 3;
+        int radarSlots = 9;
         if (index < radarSlots) {
             if (!moveItemStackTo(stack, radarSlots, slots.size(), true)) {
                 return ItemStack.EMPTY;

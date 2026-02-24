@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RadarBlockEntity extends BlockEntity implements MenuProvider, Container {
     public static final int BASE_BONUS = 64;
-    private static final int SLOT_COUNT = 3;
+    private static final int SLOT_COUNT = 9;
     private static final int LENS_BONUS = 8;
     private static final int AMP_BONUS = 16;
 
