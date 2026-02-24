@@ -43,7 +43,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private static final int ROW_HEIGHT = 14;
     private static final int WAYPOINT_ROWS = 6;
 
-    private static final int GRID_SIZE = 80;
+    private int gridSize = 80;
     private static final int SCROLLBAR_WIDTH = 10;
     private static final int SCROLLBAR_PADDING = 4;
     private static final int MIN_PANEL_WIDTH = 240;
@@ -85,7 +85,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int mapRange = 256;
     private int lastMapRange = 256;
     private int mapBuildRow = 0;
-    private int[][] mapColors = new int[GRID_SIZE][GRID_SIZE];
+    private int[][] mapColors = new int[gridSize][gridSize];
     private boolean mapDirty = true;
     private int lastMapCenterX;
     private int lastMapCenterZ;
@@ -233,7 +233,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 button -> applyConfig())
                 .bounds(x + leftX, y + 288, leftListWidth, 18).build());
 
-        int waypointBaseY = y + gridY + GRID_SIZE + 12;
+        int waypointBaseY = y + gridY + gridSize + 12;
         waypointYField = new EditBox(font, x + leftX, waypointBaseY, leftListWidth, 16, Component.translatable("screen.immersive_autopilot.waypoint_y"));
         waypointYField.setValue("0");
         addRouteWidget(waypointYField);
@@ -315,7 +315,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         leftListWidth = Math.max(110, rightX - leftX - 12);
         rightListWidth = Math.max(110, rightColumnWidth);
 
-        gridX = rightX + Math.max(0, (rightColumnWidth - GRID_SIZE) / 2);
+        ensureMapSize(leftListWidth);
+        gridX = leftX;
         gridY = BASE_GRID_Y;
     }
 
@@ -337,6 +338,17 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private int getViewportHeight() {
         return getContentY1() - getContentY0();
+    }
+
+    private void ensureMapSize(int newSize) {
+        int resolved = Math.max(1, newSize);
+        if (resolved == gridSize) {
+            return;
+        }
+        gridSize = resolved;
+        mapColors = new int[gridSize][gridSize];
+        mapDirty = true;
+        mapBuildRow = 0;
     }
 
     private void drawFieldLabel(GuiGraphics graphics, Component label, AbstractWidget field) {
@@ -378,7 +390,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         for (WidgetSlot slot : routeSlots) {
             routeMax = Math.max(routeMax, slot.baseY + slot.height);
         }
-        int gridBottom = topPos + gridY + GRID_SIZE;
+        int gridBottom = topPos + gridY + gridSize;
         routeMax = Math.max(routeMax, gridBottom + 8);
         routeContentHeight = Math.max(1, routeMax - contentTop + 8);
     }
@@ -772,10 +784,10 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private void drawGrid(GuiGraphics graphics, float partialTick) {
         int x0 = leftPos + gridX;
         int y0 = topPos + gridY - getScrollOffset();
-        int x1 = x0 + GRID_SIZE;
-        int y1 = y0 + GRID_SIZE;
+        int x1 = x0 + gridSize;
+        int y1 = y0 + gridSize;
 
-        boolean renderedXaero = com.immersiveautopilot.client.XaeroBridge.renderMinimap(graphics, x0, y0, GRID_SIZE, GRID_SIZE, partialTick, true, true);
+        boolean renderedXaero = com.immersiveautopilot.client.XaeroBridge.renderMinimap(graphics, x0, y0, gridSize, gridSize, partialTick, true, true);
 
         Player player = Minecraft.getInstance().player;
         if (player == null) {
@@ -785,19 +797,19 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         if (!renderedXaero) {
             updateMapCache(level);
 
-            for (int dz = 0; dz < GRID_SIZE; dz++) {
-                for (int dx = 0; dx < GRID_SIZE; dx++) {
+            for (int dz = 0; dz < gridSize; dz++) {
+                for (int dx = 0; dx < gridSize; dx++) {
                     int color = mapColors[dx][dz];
                     graphics.fill(x0 + dx, y0 + dz, x0 + dx + 1, y0 + dz + 1, color);
                 }
             }
 
-            for (int i = 0; i <= GRID_SIZE; i += 16) {
+            for (int i = 0; i <= gridSize; i += 16) {
                 graphics.hLine(x0, x1, y0 + i, 0x5522262B);
                 graphics.vLine(x0 + i, y0, y1, 0x5522262B);
             }
-            graphics.hLine(x0, x1, y0 + GRID_SIZE / 2, 0xFF2F343A);
-            graphics.vLine(x0 + GRID_SIZE / 2, y0, y1, 0xFF2F343A);
+            graphics.hLine(x0, x1, y0 + gridSize / 2, 0xFF2F343A);
+            graphics.vLine(x0 + gridSize / 2, y0, y1, 0xFF2F343A);
         }
         List<RouteWaypoint> points = activeRoute.getWaypoints();
         for (com.immersiveautopilot.route.RouteLink link : activeRoute.getLinks()) {
@@ -809,11 +821,11 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             if (!from.getDimension().equals(level.dimension().location()) || !to.getDimension().equals(level.dimension().location())) {
                 continue;
             }
-            double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
-            int fx = x0 + (int) Math.round(GRID_SIZE / 2.0 + (from.getPos().getX() - gridCenterX) / blocksPerPixel);
-            int fz = y0 + (int) Math.round(GRID_SIZE / 2.0 + (from.getPos().getZ() - gridCenterZ) / blocksPerPixel);
-            int tx = x0 + (int) Math.round(GRID_SIZE / 2.0 + (to.getPos().getX() - gridCenterX) / blocksPerPixel);
-            int tz = y0 + (int) Math.round(GRID_SIZE / 2.0 + (to.getPos().getZ() - gridCenterZ) / blocksPerPixel);
+            double blocksPerPixel = (mapRange * 2.0) / gridSize;
+            int fx = x0 + (int) Math.round(gridSize / 2.0 + (from.getPos().getX() - gridCenterX) / blocksPerPixel);
+            int fz = y0 + (int) Math.round(gridSize / 2.0 + (from.getPos().getZ() - gridCenterZ) / blocksPerPixel);
+            int tx = x0 + (int) Math.round(gridSize / 2.0 + (to.getPos().getX() - gridCenterX) / blocksPerPixel);
+            int tz = y0 + (int) Math.round(gridSize / 2.0 + (to.getPos().getZ() - gridCenterZ) / blocksPerPixel);
             drawArrow(graphics, fx, fz, tx, tz, 0xFF4FC3F7);
         }
 
@@ -822,9 +834,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             if (!wp.getDimension().equals(level.dimension().location())) {
                 continue;
             }
-            double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
-            int px = x0 + (int) Math.round(GRID_SIZE / 2.0 + (wp.getPos().getX() - gridCenterX) / blocksPerPixel);
-            int pz = y0 + (int) Math.round(GRID_SIZE / 2.0 + (wp.getPos().getZ() - gridCenterZ) / blocksPerPixel);
+            double blocksPerPixel = (mapRange * 2.0) / gridSize;
+            int px = x0 + (int) Math.round(gridSize / 2.0 + (wp.getPos().getX() - gridCenterX) / blocksPerPixel);
+            int pz = y0 + (int) Math.round(gridSize / 2.0 + (wp.getPos().getZ() - gridCenterZ) / blocksPerPixel);
             if (px < x0 || px >= x1 || pz < y0 || pz >= y1) {
                 continue;
             }
@@ -850,14 +862,14 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         if (!mapDirty) {
             return;
         }
-        double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
+        double blocksPerPixel = (mapRange * 2.0) / gridSize;
         int rowsPerUpdate = 4;
-        int endRow = Math.min(GRID_SIZE, mapBuildRow + rowsPerUpdate);
+        int endRow = Math.min(gridSize, mapBuildRow + rowsPerUpdate);
         net.minecraft.core.BlockPos.MutableBlockPos mutable = new net.minecraft.core.BlockPos.MutableBlockPos();
         for (int dz = mapBuildRow; dz < endRow; dz++) {
-            int worldZ = gridCenterZ + (int) Math.round((dz - GRID_SIZE / 2.0) * blocksPerPixel);
-            for (int dx = 0; dx < GRID_SIZE; dx++) {
-                int worldX = gridCenterX + (int) Math.round((dx - GRID_SIZE / 2.0) * blocksPerPixel);
+            int worldZ = gridCenterZ + (int) Math.round((dz - gridSize / 2.0) * blocksPerPixel);
+            for (int dx = 0; dx < gridSize; dx++) {
+                int worldX = gridCenterX + (int) Math.round((dx - gridSize / 2.0) * blocksPerPixel);
                 mutable.set(worldX, 0, worldZ);
                 if (!level.hasChunkAt(mutable)) {
                     mapColors[dx][dz] = 0xFF1B1F26;
@@ -870,7 +882,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             }
         }
         mapBuildRow = endRow;
-        if (mapBuildRow >= GRID_SIZE) {
+        if (mapBuildRow >= gridSize) {
             mapDirty = false;
         }
     }
@@ -1055,9 +1067,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         }
         int x0 = leftPos + gridX;
         int y0 = topPos + gridY - getScrollOffset();
-        double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
-        double gridX = mouseX - x0 - GRID_SIZE / 2.0;
-        double gridZ = mouseY - y0 - GRID_SIZE / 2.0;
+        double blocksPerPixel = (mapRange * 2.0) / gridSize;
+        double gridX = mouseX - x0 - gridSize / 2.0;
+        double gridZ = mouseY - y0 - gridSize / 2.0;
         int worldX = gridCenterX + (int) Math.round(gridX * blocksPerPixel);
         int worldZ = gridCenterZ + (int) Math.round(gridZ * blocksPerPixel);
         float speed = 1.0f;
@@ -1076,7 +1088,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private boolean isInsideGrid(double mouseX, double mouseY) {
         int x0 = leftPos + gridX;
         int y0 = topPos + gridY - getScrollOffset();
-        return mouseX >= x0 && mouseX <= x0 + GRID_SIZE && mouseY >= y0 && mouseY <= y0 + GRID_SIZE;
+        return mouseX >= x0 && mouseX <= x0 + gridSize && mouseY >= y0 && mouseY <= y0 + gridSize;
     }
 
     private int findPointIndexAt(double mouseX, double mouseY) {
@@ -1086,14 +1098,14 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int x0 = leftPos + gridX;
         int y0 = topPos + gridY - getScrollOffset();
         List<RouteWaypoint> points = activeRoute.getWaypoints();
-        double blocksPerPixel = (mapRange * 2.0) / GRID_SIZE;
+        double blocksPerPixel = (mapRange * 2.0) / gridSize;
         for (int i = 0; i < points.size(); i++) {
             RouteWaypoint wp = points.get(i);
             if (!wp.getDimension().equals(Minecraft.getInstance().level.dimension().location())) {
                 continue;
             }
-            int px = x0 + (int) Math.round(GRID_SIZE / 2.0 + (wp.getPos().getX() - gridCenterX) / blocksPerPixel);
-            int pz = y0 + (int) Math.round(GRID_SIZE / 2.0 + (wp.getPos().getZ() - gridCenterZ) / blocksPerPixel);
+            int px = x0 + (int) Math.round(gridSize / 2.0 + (wp.getPos().getX() - gridCenterX) / blocksPerPixel);
+            int pz = y0 + (int) Math.round(gridSize / 2.0 + (wp.getPos().getZ() - gridCenterZ) / blocksPerPixel);
             double dist = Math.hypot(mouseX - px, mouseY - pz);
             if (dist <= 4.0) {
                 return i;
