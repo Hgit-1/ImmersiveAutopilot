@@ -28,6 +28,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.Util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -112,6 +113,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private boolean draggingScroll = false;
     private int scrollDragStartY = 0;
     private int dragStartScroll = 0;
+    private boolean xaeroSynced = false;
+    private long lastScrollUpdateMs = 0L;
+    private static final long SCROLL_UPDATE_INTERVAL_MS = 80L;
 
     public TowerScreen(TowerMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -136,6 +140,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     @Override
     protected void init() {
         super.init();
+        xaeroSynced = false;
         int x = leftPos;
         int y = topPos;
 
@@ -353,6 +358,15 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         }
     }
 
+    private void applyScrollToWidgetsIfNeeded() {
+        long now = Util.getMillis();
+        if (now - lastScrollUpdateMs < SCROLL_UPDATE_INTERVAL_MS) {
+            return;
+        }
+        lastScrollUpdateMs = now;
+        applyScrollToWidgets();
+    }
+
     private void applyConfig() {
         NetworkHandler.sendToServer(new C2SSetTowerConfig(
                 menu.getPos(),
@@ -505,7 +519,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     @Override
     public void containerTick() {
         super.containerTick();
-        applyScrollToWidgets();
+        applyScrollToWidgetsIfNeeded();
         TowerState state = ClientCache.getTowerState(menu.getPos());
         if (state != null) {
             boundUuid = state.getBoundAircraft();
@@ -547,6 +561,10 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 selectedPointIndex = -1;
             }
             updateWaypointControls();
+            if (!xaeroSynced && com.immersiveautopilot.client.XaeroBridge.isAvailable()) {
+                com.immersiveautopilot.client.XaeroBridge.syncTemporaryWaypoints(activeRoute, null);
+                xaeroSynced = true;
+            }
         }
 
         List<AircraftSnapshot> newList = ClientCache.getAircraftList(menu.getPos());
@@ -565,7 +583,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        applyScrollToWidgets();
+        applyScrollToWidgetsIfNeeded();
         // Avoid background blur from other UI mods.
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF0F1114);
 
