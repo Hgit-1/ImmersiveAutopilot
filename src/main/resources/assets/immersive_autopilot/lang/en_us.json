@@ -40,5 +40,12 @@
   "screen.immersive_autopilot.route_offer_from": "From",
   "screen.immersive_autopilot.route_offer_points": "Waypoints",
   "screen.immersive_autopilot.route_offer_primary": "Primary (Left Click)",
-  "screen.immersive_autopilot.route_offer_backup": "Backup (Right Click)"
+  "screen.immersive_autopilot.route_offer_backup": "Backup (Right Click)",
+  "screen.immersive_autopilot.tab_base": "Base",
+  "screen.immersive_autopilot.tab_routes": "Routes",
+  "screen.immersive_autopilot.waypoint_y": "Height",
+  "screen.immersive_autopilot.waypoint_speed": "Speed",
+  "screen.immersive_autopilot.waypoint_hold": "Hold",
+  "screen.immersive_autopilot.apply_waypoint": "Apply",
+  "screen.immersive_autopilot.delete_waypoint": "Delete"
 }

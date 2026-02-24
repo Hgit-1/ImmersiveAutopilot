@@ -89,6 +89,11 @@ public class RouteOfferScreen extends Screen {
     }
 
     @Override
+    protected void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        // Intentionally blank to avoid background blur.
+    }
+
+    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int listX = this.width / 2 - 120;
         int listY = this.height / 2 - 50;
