@@ -110,7 +110,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int baseContentHeight = 0;
     private int routeContentHeight = 0;
     private boolean draggingScroll = false;
-    private int dragStartY = 0;
+    private int scrollDragStartY = 0;
     private int dragStartScroll = 0;
 
     public TowerScreen(TowerMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
@@ -856,7 +856,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && isInsideScrollbar(mouseX, mouseY)) {
             draggingScroll = true;
-            dragStartY = (int) mouseY;
+            scrollDragStartY = (int) mouseY;
             dragStartScroll = getScrollOffset();
             return true;
         }
@@ -939,7 +939,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 int maxScroll = content - viewport;
                 int thumbHeight = Math.max(16, (int) Math.round(viewport * (viewport / (double) content)));
                 int trackHeight = viewport - thumbHeight;
-                int delta = (int) mouseY - dragStartY;
+                int delta = (int) mouseY - scrollDragStartY;
                 int scrollDelta = (int) Math.round(delta * (maxScroll / (double) Math.max(1, trackHeight)));
                 setScrollOffset(dragStartScroll + scrollDelta);
             }
