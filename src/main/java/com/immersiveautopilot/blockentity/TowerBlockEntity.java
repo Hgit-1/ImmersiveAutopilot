@@ -2,6 +2,7 @@ package com.immersiveautopilot.blockentity;
 
 import com.immersiveautopilot.menu.TowerMenu;
 import com.immersiveautopilot.route.RouteProgram;
+import com.immersiveautopilot.route.RouteWaypoint;
 import com.immersiveautopilot.config.WorldConfig;
 import com.immersiveautopilot.config.WorldConfigData;
 import com.immersiveautopilot.network.RouteOfferManager;
@@ -274,6 +275,8 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
                         mutable.set(worldPosition.getX() + dx, worldPosition.getY() + dy, worldPosition.getZ() + dz);
                         if (level.getBlockEntity(mutable) instanceof com.immersiveautopilot.blockentity.RadarBlockEntity radar) {
                             bonus += radar.getRangeBonus();
+                        } else if (level.getBlockState(mutable).is(com.immersiveautopilot.block.ModBlocks.RADAR.get())) {
+                            bonus += com.immersiveautopilot.blockentity.RadarBlockEntity.BASE_BONUS;
                         }
                     }
                 }
@@ -313,13 +316,61 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     private List<RouteEntry> getRouteEntries() {
         List<RouteEntry> entries = new java.util.ArrayList<>();
         for (Map.Entry<String, RouteProgram> entry : presets.entrySet()) {
-            entries.add(new RouteEntry(entry.getKey(), entry.getValue()));
+            RouteProgram limited = limitProgramToAirspace(entry.getValue());
+            if (limited != null) {
+                entries.add(new RouteEntry(entry.getKey(), limited));
+            }
         }
         boolean hasActive = presets.containsKey(activeRoute.getName());
         if (!hasActive && activeRoute != null) {
-            entries.add(new RouteEntry(activeRoute.getName(), activeRoute));
+            RouteProgram limited = limitProgramToAirspace(activeRoute);
+            if (limited != null) {
+                entries.add(new RouteEntry(activeRoute.getName(), limited));
+            }
         }
         return entries;
+    }
+
+    private RouteProgram limitProgramToAirspace(RouteProgram program) {
+        if (program == null || level == null) {
+            return null;
+        }
+        List<RouteWaypoint> points = program.getWaypoints();
+        if (points.isEmpty()) {
+            return null;
+        }
+        List<RouteWaypoint> filtered = new java.util.ArrayList<>();
+        int[] remap = new int[points.size()];
+        java.util.Arrays.fill(remap, -1);
+        Vec3 center = Vec3.atCenterOf(worldPosition);
+        var dim = level.dimension().location();
+        for (int i = 0; i < points.size(); i++) {
+            RouteWaypoint wp = points.get(i);
+            if (!dim.equals(wp.getDimension())) {
+                continue;
+            }
+            double dist = center.distanceTo(Vec3.atCenterOf(wp.getPos()));
+            if (dist <= scanRange) {
+                remap[i] = filtered.size();
+                filtered.add(wp);
+            }
+        }
+        if (filtered.isEmpty()) {
+            return null;
+        }
+        RouteProgram limited = new RouteProgram(program.getName(), filtered);
+        for (com.immersiveautopilot.route.RouteLink link : program.getLinks()) {
+            int from = link.from();
+            int to = link.to();
+            if (from >= 0 && from < remap.length && to >= 0 && to < remap.length) {
+                int newFrom = remap[from];
+                int newTo = remap[to];
+                if (newFrom >= 0 && newTo >= 0) {
+                    limited.addLink(newFrom, newTo);
+                }
+            }
+        }
+        return limited;
     }
 
     @Override

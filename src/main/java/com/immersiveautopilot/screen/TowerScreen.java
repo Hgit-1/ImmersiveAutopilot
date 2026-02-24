@@ -339,6 +339,15 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         return getContentY1() - getContentY0();
     }
 
+    private void drawFieldLabel(GuiGraphics graphics, Component label, AbstractWidget field) {
+        if (field == null) {
+            return;
+        }
+        int x = field.getX();
+        int y = field.getY() - (font.lineHeight + 2);
+        graphics.drawString(font, label, x, y, 0xFFFFFFFF, true);
+    }
+
     private int getScrollOffset() {
         return pageMode == PageMode.BASE ? baseScrollOffset : routeScrollOffset;
     }
@@ -634,21 +643,25 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
         int offset = getScrollOffset();
         if (pageMode == PageMode.BASE) {
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.tower_name"), leftPos + leftX, topPos + 16 - offset, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.scan_range"), leftPos + leftX, topPos + 50 - offset, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), leftPos + leftX, topPos + 110 - offset, 0xFFFFFFFF, true);
+            drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.tower_name"), towerNameField);
+            drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.scan_range"), rangeField);
 
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.bound_aircraft"), leftPos + leftX, topPos + 196 - offset, 0xFFFFFFFF, true);
+            int listY = topPos + 126 - offset;
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), leftPos + leftX, listY - (font.lineHeight + 2), 0xFFFFFFFF, true);
+
+            int boundLabelY = topPos + 196 - offset;
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.bound_aircraft"), leftPos + leftX, boundLabelY, 0xFFFFFFFF, true);
             String boundText = boundName == null || boundName.isBlank() ? Component.translatable("screen.immersive_autopilot.no_bound_aircraft").getString() : boundName;
-            graphics.drawString(font, boundText, leftPos + leftX, topPos + 208 - offset, 0xFFFFFFFF, true);
+            graphics.drawString(font, boundText, leftPos + leftX, boundLabelY + font.lineHeight + 2, 0xFFFFFFFF, true);
 
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.auto_request"), leftPos + rightX, topPos + 16 - offset, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.enter_text"), leftPos + rightX, topPos + 38 - offset, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.exit_text"), leftPos + rightX, topPos + 60 - offset, 0xFFFFFFFF, true);
+            drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.auto_request"), autoRequestField);
+            drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.enter_text"), enterField);
+            drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.exit_text"), exitField);
         } else {
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.route_name"), leftPos + rightX, topPos + 16 - offset, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), leftPos + rightX, topPos + 110 - offset, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoint_y"), leftPos + leftX, topPos + gridY + GRID_SIZE - offset + 4, 0xFFFFFFFF, true);
+            drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.route_name"), routeNameField);
+            int listY = topPos + 126 - offset;
+            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), leftPos + rightX, listY - (font.lineHeight + 2), 0xFFFFFFFF, true);
+            drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.waypoint_y"), waypointYField);
         }
 
         if (pageMode == PageMode.ROUTE) {
