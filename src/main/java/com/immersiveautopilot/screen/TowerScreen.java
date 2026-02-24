@@ -57,8 +57,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private EditBox enterField;
     private EditBox exitField;
     private EditBox waypointYField;
-    private EditBox waypointSpeedField;
-    private EditBox waypointHoldField;
 
     private Button targetModeButton;
     private Button tabBaseButton;
@@ -193,21 +191,13 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 button -> applyConfig())
                 .bounds(x + LEFT_X, y + 288, 120, 18).build());
 
-        waypointYField = new EditBox(font, x + RIGHT_X, y + 240, 48, 16, Component.translatable("screen.immersive_autopilot.waypoint_y"));
+        waypointYField = new EditBox(font, x + RIGHT_X, y + 240, 120, 16, Component.translatable("screen.immersive_autopilot.waypoint_y"));
         waypointYField.setValue("0");
         addRouteWidget(waypointYField);
 
-        waypointSpeedField = new EditBox(font, x + RIGHT_X + 54, y + 240, 56, 16, Component.translatable("screen.immersive_autopilot.waypoint_speed"));
-        waypointSpeedField.setValue("1.0");
-        addRouteWidget(waypointSpeedField);
-
-        waypointHoldField = new EditBox(font, x + RIGHT_X, y + 262, 48, 16, Component.translatable("screen.immersive_autopilot.waypoint_hold"));
-        waypointHoldField.setValue("0");
-        addRouteWidget(waypointHoldField);
-
         applyWaypointButton = Button.builder(Component.translatable("screen.immersive_autopilot.apply_waypoint"),
                 button -> applyWaypointEdit())
-                .bounds(x + RIGHT_X + 54, y + 262, 56, 18).build();
+                .bounds(x + RIGHT_X, y + 262, 120, 18).build();
         addRouteWidget(applyWaypointButton);
 
         deleteWaypointButton = Button.builder(Component.translatable("screen.immersive_autopilot.delete_waypoint"),
@@ -280,13 +270,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         applyWaypointButton.active = active;
         deleteWaypointButton.active = active;
         waypointYField.active = active;
-        waypointSpeedField.active = active;
-        waypointHoldField.active = active;
         if (active) {
             RouteWaypoint wp = activeRoute.getWaypoints().get(selectedPointIndex);
             waypointYField.setValue(Integer.toString(wp.getPos().getY()));
-            waypointSpeedField.setValue(Float.toString(wp.getSpeed()));
-            waypointHoldField.setValue(Integer.toString(wp.getHoldSeconds()));
         }
     }
 
@@ -296,8 +282,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         }
         RouteWaypoint current = activeRoute.getWaypoints().get(selectedPointIndex);
         int y = parseInt(waypointYField.getValue(), current.getPos().getY());
-        float speed = parseFloat(waypointSpeedField.getValue(), current.getSpeed());
-        int hold = parseInt(waypointHoldField.getValue(), current.getHoldSeconds());
+        float speed = current.getSpeed();
+        int hold = current.getHoldSeconds();
         List<RouteWaypoint> newPoints = new ArrayList<>(activeRoute.getWaypoints());
         newPoints.set(selectedPointIndex, new RouteWaypoint(
                 new net.minecraft.core.BlockPos(current.getPos().getX(), y, current.getPos().getZ()),
@@ -505,8 +491,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             graphics.drawString(font, Component.translatable("screen.immersive_autopilot.route_name"), leftPos + RIGHT_X, topPos + 16, 0xFFFFFFFF, true);
             graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), leftPos + RIGHT_X, topPos + 110, 0xFFFFFFFF, true);
             graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoint_y"), leftPos + RIGHT_X, topPos + 230, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoint_speed"), leftPos + RIGHT_X + 54, topPos + 230, 0xFFFFFFFF, true);
-            graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoint_hold"), leftPos + RIGHT_X, topPos + 252, 0xFFFFFFFF, true);
         }
 
         if (pageMode == PageMode.ROUTE) {
@@ -719,6 +703,14 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 return true;
             }
         }
+        if (pageMode == PageMode.ROUTE && button == 0 && isInsideWaypointList(mouseX, mouseY)) {
+            int index = getWaypointIndex(mouseX, mouseY);
+            if (index >= 0 && index < activeRoute.getWaypoints().size()) {
+                selectedPointIndex = index;
+                updateWaypointControls();
+                return true;
+            }
+        }
         if (pageMode == PageMode.ROUTE && isInsideGrid(mouseX, mouseY)) {
             int hit = findPointIndexAt(mouseX, mouseY);
             if (button == 0) {
@@ -820,8 +812,10 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int worldZ = gridCenterZ + (int) Math.round(gridZ * blocksPerPixel);
         float speed = 1.0f;
         int hold = 0;
+        int height = player.level().getHeightmapPos(Heightmap.Types.WORLD_SURFACE,
+                new net.minecraft.core.BlockPos(worldX, 0, worldZ)).getY();
         RouteProgram program = buildProgramFromUi();
-        program.addWaypoint(new RouteWaypoint(new net.minecraft.core.BlockPos(worldX, 0, worldZ),
+        program.addWaypoint(new RouteWaypoint(new net.minecraft.core.BlockPos(worldX, height, worldZ),
                 player.level().dimension().location(), speed, hold));
         activeRoute = program;
         selectedPointIndex = activeRoute.getWaypoints().size() - 1;
@@ -872,6 +866,12 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         return aircraftScroll + row;
     }
 
+    private int getWaypointIndex(double mouseX, double mouseY) {
+        int listY = topPos + 126;
+        int row = (int) ((mouseY - listY) / ROW_HEIGHT);
+        return waypointScroll + row;
+    }
+
     private boolean isInsideWaypointList(double mouseX, double mouseY) {
         int listX = leftPos + RIGHT_X;
         int listY = topPos + 126;
@@ -888,11 +888,4 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         }
     }
 
-    private static float parseFloat(String value, float fallback) {
-        try {
-            return Float.parseFloat(value.trim());
-        } catch (Exception e) {
-            return fallback;
-        }
-    }
 }
