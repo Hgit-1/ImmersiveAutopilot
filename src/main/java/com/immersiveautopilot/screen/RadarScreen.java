@@ -110,16 +110,10 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
     }
 
     private void drawPanel(GuiGraphics context, int x, int y, int h, int w) {
-        context.blit(PANEL_TEXTURE, x, y, 176, 0, 16, 16, 512, 256);
-        context.blit(PANEL_TEXTURE, x + w - 16, y, 176 + 32, 0, 16, 16, 512, 256);
-        context.blit(PANEL_TEXTURE, x + w - 16, y + h - 16, 176 + 32, 32, 16, 16, 512, 256);
-        context.blit(PANEL_TEXTURE, x, y + h - 16, 176, 32, 16, 16, 512, 256);
-
-        context.blit(PANEL_TEXTURE, x + 16, y, w - 32, 16, 176 + 16, 0, 16, 16, 512, 256);
-        context.blit(PANEL_TEXTURE, x + 16, y + h - 16, w - 32, 16, 176 + 16, 32, 16, 16, 512, 256);
-        context.blit(PANEL_TEXTURE, x, y + 16, 16, h - 32, 176, 16, 16, 16, 512, 256);
-        context.blit(PANEL_TEXTURE, x + w - 16, y + 16, 16, h - 32, 176 + 32, 16, 16, 16, 512, 256);
-
-        context.blit(PANEL_TEXTURE, x + 16, y + 16, w - 32, h - 32, 176 + 16, 16, 16, 16, 512, 256);
+        context.fill(x, y, x + w, y + h, 0xFFC6C6C6);
+        context.fill(x, y, x + w, y + 1, 0xFFF0F0F0);
+        context.fill(x, y, x + 1, y + h, 0xFFF0F0F0);
+        context.fill(x, y + h - 1, x + w, y + h, 0xFF8A8A8A);
+        context.fill(x + w - 1, y, x + w, y + h, 0xFF8A8A8A);
     }
 }
