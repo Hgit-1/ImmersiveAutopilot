@@ -53,5 +53,8 @@
   "screen.immersive_autopilot.apply_waypoint": "Apply",
   "screen.immersive_autopilot.delete_waypoint": "Delete",
   "screen.immersive_autopilot.auto_routes_title": "Auto Routes",
-  "screen.immersive_autopilot.auto_routes_apply": "Apply"
+  "screen.immersive_autopilot.auto_routes_apply": "Apply",
+  "screen.immersive_autopilot.auto_routes_clear": "Clear",
+  "item.immersive_autopilot.radar_range_sensor": "Radar Range Sensor",
+  "item.immersive_autopilot.radar_ident_module": "Radar Identification Module"
 }

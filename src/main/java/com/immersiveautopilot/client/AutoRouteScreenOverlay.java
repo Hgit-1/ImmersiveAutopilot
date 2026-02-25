@@ -3,7 +3,6 @@ package com.immersiveautopilot.client;
 import com.immersiveautopilot.ImmersiveAutopilot;
 import immersive_aircraft.client.gui.VehicleScreen;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,12 +18,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import net.minecraft.resources.ResourceLocation;
 
 @EventBusSubscriber(modid = ImmersiveAutopilot.MOD_ID, value = Dist.CLIENT)
 public final class AutoRouteScreenOverlay {
     private static final int PANEL_WIDTH = 120;
     private static final int LINE_HEIGHT = 18;
     private static final int LINE_COUNT = 5;
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("immersive_aircraft", "textures/gui/container/inventory.png");
     private static final Map<Screen, Controller> CONTROLLERS = new WeakHashMap<>();
 
     private AutoRouteScreenOverlay() {
@@ -59,6 +60,7 @@ public final class AutoRouteScreenOverlay {
         private final VehicleScreen screen;
         private final List<EditBox> fields = new ArrayList<>();
         private Button applyButton;
+        private Button clearButton;
         private int panelX;
         private int panelY;
         private int panelHeight;
@@ -73,7 +75,7 @@ public final class AutoRouteScreenOverlay {
             int imageWidth = getImageWidth(screen);
             panelX = left + imageWidth + 8;
             panelY = top + 6;
-            panelHeight = 28 + LINE_COUNT * LINE_HEIGHT + 24;
+            panelHeight = 28 + LINE_COUNT * LINE_HEIGHT + 44;
 
             int fieldWidth = PANEL_WIDTH - 12;
             for (int i = 0; i < LINE_COUNT; i++) {
@@ -86,14 +88,21 @@ public final class AutoRouteScreenOverlay {
 
             applyButton = Button.builder(Component.translatable("screen.immersive_autopilot.auto_routes_apply"),
                     button -> applyRoutes())
-                .bounds(panelX + 6, panelY + panelHeight - 22, fieldWidth, 18)
+                .bounds(panelX + 6, panelY + panelHeight - 40, fieldWidth, 18)
                 .build();
             event.addListener(applyButton);
+
+            clearButton = Button.builder(Component.translatable("screen.immersive_autopilot.auto_routes_clear"),
+                    button -> clearRoutes())
+                .bounds(panelX + 6, panelY + panelHeight - 20, fieldWidth, 18)
+                .build();
+            event.addListener(clearButton);
+
+            AutoRouteClient.requestRoutes(screen.getMenu().getVehicle().getId());
         }
 
         private void renderPanel(GuiGraphics graphics) {
-            graphics.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + panelHeight, 0xFF101215);
-            graphics.fill(panelX + 2, panelY + 2, panelX + PANEL_WIDTH - 2, panelY + panelHeight - 2, 0xFF1B1F26);
+            drawRectangle(graphics, panelX, panelY, panelHeight, PANEL_WIDTH);
             graphics.drawString(screen.getMinecraft().font, Component.translatable("screen.immersive_autopilot.auto_routes_title"),
                     panelX + 6, panelY + 6, 0xFFFFFFFF, false);
         }
@@ -142,6 +151,17 @@ public final class AutoRouteScreenOverlay {
                 labels.add(label);
             }
             AutoRouteClient.setRoutes(screen.getMenu().getVehicle().getId(), buildEntries(names, labels));
+            immersive_aircraft.cobalt.network.NetworkHandler.sendToServer(
+                    new com.immersiveautopilot.network.C2SSetAutoRoutes(screen.getMenu().getVehicle().getId(), names, labels));
+        }
+
+        private void clearRoutes() {
+            for (EditBox field : fields) {
+                field.setValue("");
+            }
+            AutoRouteClient.setRoutes(screen.getMenu().getVehicle().getId(), List.of());
+            immersive_aircraft.cobalt.network.NetworkHandler.sendToServer(
+                    new com.immersiveautopilot.network.C2SSetAutoRoutes(screen.getMenu().getVehicle().getId(), List.of(), List.of()));
         }
 
         private List<AutoRouteClient.Entry> buildEntries(List<String> names, List<String> labels) {
@@ -162,6 +182,20 @@ public final class AutoRouteScreenOverlay {
             } catch (Exception ignored) {
                 return 176;
             }
+        }
+
+        private void drawRectangle(GuiGraphics context, int x, int y, int h, int w) {
+            context.blit(TEXTURE, x, y, 176, 0, 16, 16, 512, 256);
+            context.blit(TEXTURE, x + w - 16, y, 176 + 32, 0, 16, 16, 512, 256);
+            context.blit(TEXTURE, x + w - 16, y + h - 16, 176 + 32, 32, 16, 16, 512, 256);
+            context.blit(TEXTURE, x, y + h - 16, 176, 32, 16, 16, 512, 256);
+
+            context.blit(TEXTURE, x + 16, y, w - 32, 16, 176 + 16, 0, 16, 16, 512, 256);
+            context.blit(TEXTURE, x + 16, y + h - 16, w - 32, 16, 176 + 16, 32, 16, 16, 512, 256);
+            context.blit(TEXTURE, x, y + 16, 16, h - 32, 176, 16, 16, 16, 512, 256);
+            context.blit(TEXTURE, x + w - 16, y + 16, 16, h - 32, 176 + 32, 16, 16, 16, 512, 256);
+
+            context.blit(TEXTURE, x + 16, y + 16, w - 32, h - 32, 176 + 16, 16, 16, 16, 512, 256);
         }
     }
 }

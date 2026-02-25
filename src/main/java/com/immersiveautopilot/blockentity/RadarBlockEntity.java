@@ -47,6 +47,15 @@ public class RadarBlockEntity extends BlockEntity implements MenuProvider, Conta
         return bonus;
     }
 
+    public boolean hasIdentModule() {
+        for (ItemStack stack : items) {
+            if (!stack.isEmpty() && stack.is(ModItems.RADAR_IDENT_MODULE.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public Component getDisplayName() {
         return Component.translatable("screen.immersive_autopilot.radar");

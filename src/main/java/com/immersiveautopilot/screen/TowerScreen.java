@@ -21,6 +21,8 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -125,6 +127,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int rightListWidth = 140;
     private long lastMapUpdateMs = 0L;
     private boolean mapFrozenAfterScan = false;
+    private DynamicTexture mapTexture;
+    private ResourceLocation mapTextureId;
 
     public TowerScreen(TowerMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -354,6 +358,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         mapDirty = true;
         mapBuildRow = 0;
         mapFrozenAfterScan = false;
+        mapTexture = null;
+        mapTextureId = null;
     }
 
     private void drawFieldLabel(GuiGraphics graphics, Component label, AbstractWidget field) {
@@ -799,10 +805,14 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         Level level = player.level();
         updateMapCache(level);
 
-        for (int dz = 0; dz < gridSize; dz++) {
-            for (int dx = 0; dx < gridSize; dx++) {
-                int color = mapColors[dx][dz];
-                graphics.fill(x0 + dx, y0 + dz, x0 + dx + 1, y0 + dz + 1, color);
+        if (mapTextureId != null && mapFrozenAfterScan) {
+            graphics.blit(mapTextureId, x0, y0, 0, 0, gridSize, gridSize, gridSize, gridSize);
+        } else {
+            for (int dz = 0; dz < gridSize; dz++) {
+                for (int dx = 0; dx < gridSize; dx++) {
+                    int color = mapColors[dx][dz];
+                    graphics.fill(x0 + dx, y0 + dz, x0 + dx + 1, y0 + dz + 1, color);
+                }
             }
         }
 
@@ -864,12 +874,12 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             return;
         }
         long now = Util.getMillis();
-        if (now - lastMapUpdateMs < 40L) {
+        if (now - lastMapUpdateMs < 20L) {
             return;
         }
         lastMapUpdateMs = now;
         double blocksPerPixel = (mapRange * 2.0) / gridSize;
-        int rowsPerUpdate = 1;
+        int rowsPerUpdate = 6;
         int endRow = Math.min(gridSize, mapBuildRow + rowsPerUpdate);
         int radarY = resolveRadarY(level);
         net.minecraft.core.BlockPos.MutableBlockPos mutable = new net.minecraft.core.BlockPos.MutableBlockPos();
@@ -909,7 +919,26 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         if (mapBuildRow >= gridSize) {
             mapDirty = false;
             mapFrozenAfterScan = true;
+            buildMapTexture();
         }
+    }
+
+    private void buildMapTexture() {
+        NativeImage image = new NativeImage(gridSize, gridSize, false);
+        for (int y = 0; y < gridSize; y++) {
+            for (int x = 0; x < gridSize; x++) {
+                int argb = mapColors[x][y];
+                int a = (argb >>> 24) & 0xFF;
+                int r = (argb >>> 16) & 0xFF;
+                int g = (argb >>> 8) & 0xFF;
+                int b = argb & 0xFF;
+                int abgr = (a << 24) | (b << 16) | (g << 8) | r;
+                image.setPixelRGBA(x, y, abgr);
+            }
+        }
+        mapTexture = new DynamicTexture(image);
+        mapTextureId = ResourceLocation.fromNamespaceAndPath("immersive_autopilot", "tower_map_" + menu.getPos().asLong());
+        Minecraft.getInstance().getTextureManager().register(mapTextureId, mapTexture);
     }
 
     private int resolveRadarY(Level level) {

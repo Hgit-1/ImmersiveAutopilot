@@ -19,6 +19,10 @@ public final class ModItems {
             () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> SIGNAL_AMPLIFIER = ITEMS.register("signal_amplifier",
             () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> RADAR_RANGE_SENSOR = ITEMS.register("radar_range_sensor",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> RADAR_IDENT_MODULE = ITEMS.register("radar_ident_module",
+            () -> new Item(new Item.Properties()));
 
     private ModItems() {
     }

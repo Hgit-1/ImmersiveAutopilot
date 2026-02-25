@@ -20,6 +20,8 @@ public final class ModCreativeTabs {
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.RADAR_LENS.get());
             event.accept(ModItems.SIGNAL_AMPLIFIER.get());
+            event.accept(ModItems.RADAR_RANGE_SENSOR.get());
+            event.accept(ModItems.RADAR_IDENT_MODULE.get());
         }
     }
 }

@@ -53,5 +53,8 @@
   "screen.immersive_autopilot.apply_waypoint": "应用",
   "screen.immersive_autopilot.delete_waypoint": "删除",
   "screen.immersive_autopilot.auto_routes_title": "自动航路",
-  "screen.immersive_autopilot.auto_routes_apply": "应用"
+  "screen.immersive_autopilot.auto_routes_apply": "应用",
+  "screen.immersive_autopilot.auto_routes_clear": "清空",
+  "item.immersive_autopilot.radar_range_sensor": "雷达范围感知器",
+  "item.immersive_autopilot.radar_ident_module": "雷达识别模块"
 }

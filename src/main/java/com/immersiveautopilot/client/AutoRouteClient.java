@@ -17,6 +17,7 @@ public final class AutoRouteClient {
     private static final Map<Integer, List<Entry>> ROUTES = new ConcurrentHashMap<>();
     private static final Map<Integer, Integer> INDICES = new ConcurrentHashMap<>();
     private static final Map<Integer, Boolean> ACCEPTED = new ConcurrentHashMap<>();
+    private static final Map<Integer, Long> LAST_REQUEST = new ConcurrentHashMap<>();
 
     private AutoRouteClient() {
     }
@@ -25,6 +26,17 @@ public final class AutoRouteClient {
         ROUTES.put(vehicleId, entries == null ? List.of() : new ArrayList<>(entries));
         INDICES.put(vehicleId, 0);
         ACCEPTED.put(vehicleId, false);
+    }
+
+    public static void requestRoutes(int vehicleId) {
+        long now = System.currentTimeMillis();
+        long last = LAST_REQUEST.getOrDefault(vehicleId, 0L);
+        if (now - last < 2000L) {
+            return;
+        }
+        LAST_REQUEST.put(vehicleId, now);
+        immersive_aircraft.cobalt.network.NetworkHandler.sendToServer(
+                new com.immersiveautopilot.network.C2SRequestAutoRoutes(vehicleId));
     }
 
     public static List<Entry> getRoutes(int vehicleId) {
@@ -62,6 +74,7 @@ public final class AutoRouteClient {
 
     public static void onAirspaceEnter(int vehicleId) {
         ACCEPTED.put(vehicleId, false);
+        requestRoutes(vehicleId);
     }
 
     public static void onAirspaceExit(int vehicleId) {

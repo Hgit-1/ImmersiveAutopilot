@@ -16,8 +16,10 @@ public class AircraftSnapshot {
     private final float enginePower;
     private final float fuelUtilization;
     private final float health;
+    private final double posX;
+    private final double posZ;
 
-    public AircraftSnapshot(int entityId, UUID uuid, String name, ResourceLocation typeId, double distance, double altitude, double speed, float enginePower, float fuelUtilization, float health) {
+    public AircraftSnapshot(int entityId, UUID uuid, String name, ResourceLocation typeId, double distance, double altitude, double speed, float enginePower, float fuelUtilization, float health, double posX, double posZ) {
         this.entityId = entityId;
         this.uuid = uuid;
         this.name = name;
@@ -28,6 +30,8 @@ public class AircraftSnapshot {
         this.enginePower = enginePower;
         this.fuelUtilization = fuelUtilization;
         this.health = health;
+        this.posX = posX;
+        this.posZ = posZ;
     }
 
     public int getEntityId() {
@@ -70,6 +74,14 @@ public class AircraftSnapshot {
         return health;
     }
 
+    public double getPosX() {
+        return posX;
+    }
+
+    public double getPosZ() {
+        return posZ;
+    }
+
     public void writeToBuf(RegistryFriendlyByteBuf buf) {
         buf.writeInt(entityId);
         buf.writeUUID(uuid);
@@ -81,6 +93,8 @@ public class AircraftSnapshot {
         buf.writeFloat(enginePower);
         buf.writeFloat(fuelUtilization);
         buf.writeFloat(health);
+        buf.writeDouble(posX);
+        buf.writeDouble(posZ);
     }
 
     public static AircraftSnapshot readFromBuf(RegistryFriendlyByteBuf buf) {
@@ -94,6 +108,8 @@ public class AircraftSnapshot {
         float enginePower = buf.readFloat();
         float fuel = buf.readFloat();
         float health = buf.readFloat();
-        return new AircraftSnapshot(entityId, uuid, name, typeId, distance, altitude, speed, enginePower, fuel, health);
+        double posX = buf.readDouble();
+        double posZ = buf.readDouble();
+        return new AircraftSnapshot(entityId, uuid, name, typeId, distance, altitude, speed, enginePower, fuel, health, posX, posZ);
     }
 }

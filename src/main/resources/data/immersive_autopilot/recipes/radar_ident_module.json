@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RGR",
+    "GLG",
+    "RGR"
+  ],
+  "key": {
+    "R": { "item": "minecraft:redstone" },
+    "G": { "item": "minecraft:gold_ingot" },
+    "L": { "item": "immersive_autopilot:radar_lens" }
+  },
+  "result": {
+    "item": "immersive_autopilot:radar_ident_module"
+  }
+}

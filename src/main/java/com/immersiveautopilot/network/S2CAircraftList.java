@@ -48,21 +48,29 @@ public class S2CAircraftList extends Message {
 
         List<AircraftSnapshot> snapshots = new ArrayList<>();
         for (VehicleEntity vehicle : level.getEntitiesOfClass(VehicleEntity.class, box)) {
-            double distance = vehicle.position().distanceTo(center);
-            double altitude = vehicle.getY();
-            double speed = vehicle.getDeltaMovement().length();
-            float enginePower = 0.0f;
-            float fuel = 0.0f;
-            if (vehicle instanceof EngineVehicle engineVehicle) {
-                enginePower = engineVehicle.getEnginePower();
-                fuel = engineVehicle.getFuelUtilization();
-            }
-            ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(vehicle.getType());
-            String name = vehicle.getDisplayName().getString();
-            snapshots.add(new AircraftSnapshot(vehicle.getId(), vehicle.getUUID(), name, typeId, distance, altitude, speed, enginePower, fuel, vehicle.getHealth()));
+            snapshots.add(buildSnapshot(vehicle, center));
         }
 
         immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(new S2CAircraftList(towerPos, snapshots), player);
+    }
+
+    public static void sendToPlayer(ServerPlayer player, BlockPos pos, List<AircraftSnapshot> snapshots) {
+        immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(new S2CAircraftList(pos, snapshots), player);
+    }
+
+    public static AircraftSnapshot buildSnapshot(VehicleEntity vehicle, Vec3 center) {
+        double distance = vehicle.position().distanceTo(center);
+        double altitude = vehicle.getY();
+        double speed = vehicle.getDeltaMovement().length();
+        float enginePower = 0.0f;
+        float fuel = 0.0f;
+        if (vehicle instanceof EngineVehicle engineVehicle) {
+            enginePower = engineVehicle.getEnginePower();
+            fuel = engineVehicle.getFuelUtilization();
+        }
+        ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(vehicle.getType());
+        String name = vehicle.getDisplayName().getString();
+        return new AircraftSnapshot(vehicle.getId(), vehicle.getUUID(), name, typeId, distance, altitude, speed, enginePower, fuel, vehicle.getHealth(), vehicle.getX(), vehicle.getZ());
     }
 
     @Override
