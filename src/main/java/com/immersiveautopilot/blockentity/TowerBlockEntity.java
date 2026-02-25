@@ -8,6 +8,7 @@ import com.immersiveautopilot.config.WorldConfigData;
 import com.immersiveautopilot.network.RouteOfferManager;
 import com.immersiveautopilot.network.S2CRouteOfferToPilot;
 import com.immersiveautopilot.route.RouteEntry;
+import com.immersiveautopilot.blockentity.RadarBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -324,16 +325,17 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     private List<RouteEntry> getRouteEntries() {
+        boolean allowSpeed = hasAutoSupportNearby();
         List<RouteEntry> entries = new java.util.ArrayList<>();
         for (Map.Entry<String, RouteProgram> entry : presets.entrySet()) {
-            RouteProgram limited = limitProgramToAirspace(entry.getValue());
+            RouteProgram limited = limitProgramToAirspace(entry.getValue(), allowSpeed);
             if (limited != null) {
                 entries.add(new RouteEntry(entry.getKey(), limited));
             }
         }
         boolean hasActive = presets.containsKey(activeRoute.getName());
         if (!hasActive && activeRoute != null) {
-            RouteProgram limited = limitProgramToAirspace(activeRoute);
+            RouteProgram limited = limitProgramToAirspace(activeRoute, allowSpeed);
             if (limited != null) {
                 entries.add(new RouteEntry(activeRoute.getName(), limited));
             }
@@ -341,7 +343,7 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         return entries;
     }
 
-    private RouteProgram limitProgramToAirspace(RouteProgram program) {
+    private RouteProgram limitProgramToAirspace(RouteProgram program, boolean allowSpeed) {
         if (program == null || level == null) {
             return null;
         }
@@ -362,7 +364,8 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
             double dist = center.distanceTo(Vec3.atCenterOf(wp.getPos()));
             if (dist <= scanRange) {
                 remap[i] = filtered.size();
-                filtered.add(wp);
+                float speed = allowSpeed ? wp.getSpeed() : 1.0f;
+                filtered.add(new RouteWaypoint(wp.getPos(), wp.getDimension(), speed, wp.getHoldSeconds()));
             }
         }
         if (filtered.isEmpty()) {
@@ -381,6 +384,26 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
             }
         }
         return limited;
+    }
+
+    private boolean hasAutoSupportNearby() {
+        if (level == null) {
+            return false;
+        }
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+        for (int dy = -2; dy <= 2; dy++) {
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    mutable.set(worldPosition.getX() + dx, worldPosition.getY() + dy, worldPosition.getZ() + dz);
+                    if (level.getBlockEntity(mutable) instanceof RadarBlockEntity radar) {
+                        if (radar.hasAutoSupportModule()) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     @Override
