@@ -62,7 +62,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private EditBox exitField;
     private EditBox waypointYField;
     private EditBox waypointSpeedField;
-    private EditBox waypointHoldField;
 
     private Button targetModeButton;
     private Button tabBaseButton;
@@ -267,13 +266,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         waypointYField.setValue("0");
         addRouteWidget(waypointYField);
 
-        waypointSpeedField = new EditBox(font, x + leftX, waypointBaseY + 22, leftListWidth, 16, Component.translatable("screen.immersive_autopilot.waypoint_speed"));
+        waypointSpeedField = new EditBox(font, x + leftX, waypointBaseY + 44, leftListWidth, 16, Component.translatable("screen.immersive_autopilot.waypoint_speed"));
         waypointSpeedField.setValue("1.0");
         addRouteWidget(waypointSpeedField);
-
-        waypointHoldField = new EditBox(font, x + leftX, waypointBaseY + 44, leftListWidth, 16, Component.translatable("screen.immersive_autopilot.waypoint_hold"));
-        waypointHoldField.setValue("0");
-        addRouteWidget(waypointHoldField);
 
         applyWaypointButton = Button.builder(Component.translatable("screen.immersive_autopilot.apply_waypoint"),
                 button -> applyWaypointEdit())
@@ -480,7 +475,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         deleteWaypointButton.active = active;
         waypointYField.active = active;
         waypointSpeedField.active = active && allowSpeedConfig;
-        waypointHoldField.active = active;
         waypointSpeedField.visible = allowSpeedConfig;
         if (active) {
             RouteWaypoint wp = activeRoute.getWaypoints().get(selectedPointIndex);
@@ -489,9 +483,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             }
             if (allowSpeedConfig && (!waypointSpeedField.isFocused() || selectedPointIndex != lastSelectedPointIndex)) {
                 waypointSpeedField.setValue(String.format(java.util.Locale.ROOT, "%.2f", wp.getSpeed()));
-            }
-            if (!waypointHoldField.isFocused() || selectedPointIndex != lastSelectedPointIndex) {
-                waypointHoldField.setValue(Integer.toString(wp.getHoldSeconds()));
             }
         }
         lastSelectedPointIndex = selectedPointIndex;
@@ -507,7 +498,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         if (allowSpeedConfig) {
             speed = clampFloat(waypointSpeedField.getValue(), current.getSpeed(), 0.0f, 1.0f);
         }
-        int hold = parseInt(waypointHoldField.getValue(), current.getHoldSeconds());
+        int hold = current.getHoldSeconds();
         List<RouteWaypoint> newPoints = new ArrayList<>(activeRoute.getWaypoints());
         newPoints.set(selectedPointIndex, new RouteWaypoint(
                 new net.minecraft.core.BlockPos(current.getPos().getX(), y, current.getPos().getZ()),
@@ -734,7 +725,6 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             if (allowSpeedConfig) {
                 drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.waypoint_speed"), waypointSpeedField);
             }
-            drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.waypoint_hold"), waypointHoldField);
         }
 
         if (pageMode == PageMode.ROUTE) {
