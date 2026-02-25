@@ -51,5 +51,7 @@
   "screen.immersive_autopilot.waypoint_speed": "Speed",
   "screen.immersive_autopilot.waypoint_hold": "Hold",
   "screen.immersive_autopilot.apply_waypoint": "Apply",
-  "screen.immersive_autopilot.delete_waypoint": "Delete"
+  "screen.immersive_autopilot.delete_waypoint": "Delete",
+  "screen.immersive_autopilot.auto_routes_title": "Auto Routes",
+  "screen.immersive_autopilot.auto_routes_apply": "Apply"
 }

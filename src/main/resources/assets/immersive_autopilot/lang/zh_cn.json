@@ -51,5 +51,7 @@
   "screen.immersive_autopilot.waypoint_speed": "速度",
   "screen.immersive_autopilot.waypoint_hold": "停留",
   "screen.immersive_autopilot.apply_waypoint": "应用",
-  "screen.immersive_autopilot.delete_waypoint": "删除"
+  "screen.immersive_autopilot.delete_waypoint": "删除",
+  "screen.immersive_autopilot.auto_routes_title": "自动航路",
+  "screen.immersive_autopilot.auto_routes_apply": "应用"
 }

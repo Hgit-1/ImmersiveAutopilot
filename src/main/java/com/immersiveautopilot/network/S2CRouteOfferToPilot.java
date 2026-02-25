@@ -2,6 +2,7 @@ package com.immersiveautopilot.network;
 
 import com.immersiveautopilot.route.RouteEntry;
 import com.immersiveautopilot.route.RouteProgram;
+import com.immersiveautopilot.client.AutoRouteClient;
 import com.immersiveautopilot.screen.RouteOfferScreen;
 import immersive_aircraft.cobalt.network.Message;
 import net.minecraft.client.Minecraft;
@@ -61,6 +62,9 @@ public class S2CRouteOfferToPilot extends Message {
                 return;
             }
             if (com.immersiveautopilot.client.ClientRouteGuidance.shouldSuppressOffers(vehicleId)) {
+                return;
+            }
+            if (AutoRouteClient.tryAutoAccept(vehicleId, entries)) {
                 return;
             }
             Minecraft.getInstance().setScreen(new RouteOfferScreen(vehicleId, operatorName, entries));
