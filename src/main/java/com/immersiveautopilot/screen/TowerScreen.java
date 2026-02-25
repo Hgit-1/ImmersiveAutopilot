@@ -124,6 +124,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int leftListWidth = 120;
     private int rightListWidth = 140;
     private long lastMapUpdateMs = 0L;
+    private boolean mapFrozenAfterScan = false;
 
     public TowerScreen(TowerMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -352,6 +353,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         mapColors = new int[gridSize][gridSize];
         mapDirty = true;
         mapBuildRow = 0;
+        mapFrozenAfterScan = false;
     }
 
     private void drawFieldLabel(GuiGraphics graphics, Component label, AbstractWidget field) {
@@ -591,7 +593,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 towerNameField.setValue(state.getTowerName());
             }
             rangeField.setValue(Integer.toString(state.getScanRange()));
-            if (state.getScanRange() != mapRange) {
+            if (!mapFrozenAfterScan && state.getScanRange() != mapRange) {
                 mapRange = Math.max(1, state.getScanRange());
             }
             if (!autoRequestField.isFocused()) {
@@ -851,7 +853,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             mapDirty = true;
             mapBuildRow = 0;
         }
-        if (gridCenterX != lastMapCenterX || gridCenterZ != lastMapCenterZ || mapRange != lastMapRange) {
+        if (!mapFrozenAfterScan && (gridCenterX != lastMapCenterX || gridCenterZ != lastMapCenterZ || mapRange != lastMapRange)) {
             lastMapCenterX = gridCenterX;
             lastMapCenterZ = gridCenterZ;
             lastMapRange = mapRange;
@@ -906,6 +908,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         mapBuildRow = endRow;
         if (mapBuildRow >= gridSize) {
             mapDirty = false;
+            mapFrozenAfterScan = true;
         }
     }
 
@@ -1105,6 +1108,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     }
 
     private void startDrag(double mouseX, double mouseY) {
+        if (mapFrozenAfterScan) {
+            return;
+        }
         draggingGrid = true;
         dragStartX = mouseX;
         dragStartY = mouseY;
