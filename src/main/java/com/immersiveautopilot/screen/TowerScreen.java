@@ -50,7 +50,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private static final int MIN_PANEL_HEIGHT = 260;
     private static final int BASE_LEFT_X = 12;
     private static final int BASE_RIGHT_X = 170;
-    private static final int BASE_GRID_Y = 200;
+    private static final int BASE_GRID_Y = 32;
 
     private EditBox towerNameField;
     private EditBox rangeField;
@@ -123,6 +123,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int wideFieldWidth = 296;
     private int leftListWidth = 120;
     private int rightListWidth = 140;
+    private long lastMapUpdateMs = 0L;
 
     public TowerScreen(TowerMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -204,34 +205,36 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 .bounds(x + rightX, y + 98, rightColumnWidth, 18).build();
         addRouteWidget(sendRouteButton);
 
+        int baseButtonY = y + 214;
+        int baseButtonGap = 24;
         addBaseWidget(Button.builder(Component.translatable("screen.immersive_autopilot.bind_selected"),
                 button -> bindSelected())
-                .bounds(x + leftX, y + 214, leftListWidth, 20).build());
+                .bounds(x + leftX, baseButtonY, leftListWidth, 20).build());
 
         addBaseWidget(Button.builder(Component.translatable("screen.immersive_autopilot.unbind"),
                 button -> unbind())
-                .bounds(x + leftX, y + 240, leftListWidth, 20).build());
+                .bounds(x + leftX, baseButtonY + baseButtonGap, leftListWidth, 20).build());
 
         targetModeButton = Button.builder(Component.translatable("screen.immersive_autopilot.target_mode_bound"),
                 button -> toggleTargetMode())
-                .bounds(x + leftX, y + 266, leftListWidth, 20).build();
+                .bounds(x + leftX, baseButtonY + baseButtonGap * 2, leftListWidth, 20).build();
         addBaseWidget(targetModeButton);
 
         autoRequestField = new EditBox(font, x + rightX, y + 32, rightColumnWidth, 16, Component.translatable("screen.immersive_autopilot.auto_request"));
         autoRequestField.setValue("Auto request from {tower}");
         addBaseWidget(autoRequestField);
 
-        enterField = new EditBox(font, x + rightX, y + 54, rightColumnWidth, 16, Component.translatable("screen.immersive_autopilot.enter_text"));
+        enterField = new EditBox(font, x + rightX, y + 58, rightColumnWidth, 16, Component.translatable("screen.immersive_autopilot.enter_text"));
         enterField.setValue("Entering {tower}");
         addBaseWidget(enterField);
 
-        exitField = new EditBox(font, x + rightX, y + 76, rightColumnWidth, 16, Component.translatable("screen.immersive_autopilot.exit_text"));
+        exitField = new EditBox(font, x + rightX, y + 84, rightColumnWidth, 16, Component.translatable("screen.immersive_autopilot.exit_text"));
         exitField.setValue("Leaving {tower}");
         addBaseWidget(exitField);
 
         addBaseWidget(Button.builder(Component.translatable("screen.immersive_autopilot.apply_config"),
                 button -> applyConfig())
-                .bounds(x + leftX, y + 288, leftListWidth, 18).build());
+                .bounds(x + leftX, baseButtonY + baseButtonGap * 3, leftListWidth, 20).build());
 
         int waypointBaseY = y + gridY + gridSize + 12;
         waypointYField = new EditBox(font, x + leftX, waypointBaseY, leftListWidth, 16, Component.translatable("screen.immersive_autopilot.waypoint_y"));
@@ -641,7 +644,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int contentY0 = getContentY0();
         int contentX1 = getContentX1();
         int contentY1 = getContentY1();
-        graphics.drawString(font, title, leftPos + 8, topPos + 6, 0xFFFFFFFF, true);
+        // Suppress title text to avoid overlapping tab buttons.
         graphics.enableScissor(contentX0, contentY0, contentX1, contentY1);
 
         if (pageMode == PageMode.BASE) {
@@ -858,8 +861,13 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         if (!mapDirty) {
             return;
         }
+        long now = Util.getMillis();
+        if (now - lastMapUpdateMs < 40L) {
+            return;
+        }
+        lastMapUpdateMs = now;
         double blocksPerPixel = (mapRange * 2.0) / gridSize;
-        int rowsPerUpdate = 4;
+        int rowsPerUpdate = 1;
         int endRow = Math.min(gridSize, mapBuildRow + rowsPerUpdate);
         int radarY = resolveRadarY(level);
         net.minecraft.core.BlockPos.MutableBlockPos mutable = new net.minecraft.core.BlockPos.MutableBlockPos();
