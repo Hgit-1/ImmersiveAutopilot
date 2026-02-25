@@ -6,10 +6,10 @@ license="All Rights Reserved"
 modId="${mod_id}"
 version="${version}"
 displayName="${mod_name}"
-logoFile=""
+logoFile="logo.png"
 credits=""
 authors=""
-description='''Immersive Autopilot block and routing UI.'''
+description='''Autopilot towers, radar coverage, and route guidance for Immersive Aircraft.'''
 
 [[dependencies.${mod_id}]]
 modId="neoforge"
