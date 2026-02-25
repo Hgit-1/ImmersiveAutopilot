@@ -9,7 +9,7 @@ public final class AutopilotKeyBindings {
     public static final KeyMapping TOGGLE_AUTOPILOT = new KeyMapping(
             "key.immersive_autopilot.autopilot_toggle",
             InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_CAPS_LOCK,
+            GLFW.GLFW_KEY_COMMA,
             CATEGORY
     );
 
