@@ -53,7 +53,7 @@ public class C2SSetAutoRoutes extends Message {
         if (!(player.level().getEntity(vehicleId) instanceof VehicleEntity vehicle)) {
             return;
         }
-        if (vehicle.getControllingPassenger() != player) {
+        if (!vehicle.hasPassenger(player)) {
             return;
         }
         var data = AutoRouteSavedData.get(player.serverLevel());

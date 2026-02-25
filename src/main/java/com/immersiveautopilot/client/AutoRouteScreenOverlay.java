@@ -107,6 +107,23 @@ public final class AutoRouteScreenOverlay {
             drawRectangle(graphics, panelX, panelY, panelHeight, PANEL_WIDTH);
             graphics.drawString(screen.getMinecraft().font, Component.translatable("screen.immersive_autopilot.auto_routes_title"),
                     panelX + 6, panelY + 6, 0xFFFFFFFF, false);
+            drawTextFieldFrames(graphics);
+        }
+
+        private void drawTextFieldFrames(GuiGraphics graphics) {
+            int light = 0xFFBFBFBF;
+            int dark = 0xFF4C4C4C;
+            int fill = 0xFF101010;
+            for (EditBox field : fields) {
+                int x = field.getX();
+                int y = field.getY();
+                int w = field.getWidth();
+                int h = field.getHeight();
+                graphics.fill(x - 1, y - 1, x + w + 1, y + h + 1, dark);
+                graphics.fill(x, y, x + w, y + h, fill);
+                graphics.fill(x - 1, y - 1, x + w + 1, y, light);
+                graphics.fill(x - 1, y - 1, x, y + h + 1, light);
+            }
         }
 
         private void syncFromCache() {
