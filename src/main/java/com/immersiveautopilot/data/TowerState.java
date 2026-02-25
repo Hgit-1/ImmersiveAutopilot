@@ -21,11 +21,12 @@ public class TowerState {
     private final String exitText;
     private final boolean targetAllInRange;
     private final boolean powered;
+    private final boolean autoSupport;
     private final List<String> presetNames;
 
     public TowerState(BlockPos pos, int scanRange, UUID boundAircraft, String boundName, RouteProgram activeRoute,
                       String towerName, String autoRequestText, String enterText, String exitText,
-                      boolean targetAllInRange, boolean powered, List<String> presetNames) {
+                      boolean targetAllInRange, boolean powered, boolean autoSupport, List<String> presetNames) {
         this.pos = pos;
         this.scanRange = scanRange;
         this.boundAircraft = boundAircraft;
@@ -37,6 +38,7 @@ public class TowerState {
         this.exitText = exitText == null ? "" : exitText;
         this.targetAllInRange = targetAllInRange;
         this.powered = powered;
+        this.autoSupport = autoSupport;
         this.presetNames = presetNames == null ? List.of() : new ArrayList<>(presetNames);
     }
 
@@ -84,6 +86,10 @@ public class TowerState {
         return powered;
     }
 
+    public boolean hasAutoSupport() {
+        return autoSupport;
+    }
+
     public List<String> getPresetNames() {
         return Collections.unmodifiableList(presetNames);
     }
@@ -108,6 +114,7 @@ public class TowerState {
         buf.writeUtf(exitText);
         buf.writeBoolean(targetAllInRange);
         buf.writeBoolean(powered);
+        buf.writeBoolean(autoSupport);
         buf.writeInt(presetNames.size());
         for (String name : presetNames) {
             buf.writeUtf(name == null ? "" : name);
@@ -132,6 +139,7 @@ public class TowerState {
         String exitText = buf.readUtf();
         boolean targetAll = buf.readBoolean();
         boolean powered = buf.readBoolean();
+        boolean autoSupport = buf.readBoolean();
         int presetCount = buf.readInt();
         List<String> presets = new ArrayList<>(Math.max(0, presetCount));
         for (int i = 0; i < presetCount; i++) {
@@ -140,6 +148,6 @@ public class TowerState {
                 presets.add(preset);
             }
         }
-        return new TowerState(pos, range, bound, boundName, route, towerName, autoText, enterText, exitText, targetAll, powered, presets);
+        return new TowerState(pos, range, bound, boundName, route, towerName, autoText, enterText, exitText, targetAll, powered, autoSupport, presets);
     }
 }

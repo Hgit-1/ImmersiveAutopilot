@@ -386,7 +386,7 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         return limited;
     }
 
-    private boolean hasAutoSupportNearby() {
+    public boolean hasAutoSupportNearby() {
         if (level == null) {
             return false;
         }

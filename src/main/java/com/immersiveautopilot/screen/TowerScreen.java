@@ -61,6 +61,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private EditBox enterField;
     private EditBox exitField;
     private EditBox waypointYField;
+    private EditBox waypointSpeedField;
+    private EditBox waypointHoldField;
 
     private Button targetModeButton;
     private Button tabBaseButton;
@@ -131,6 +133,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private boolean mapFrozenAfterScan = false;
     private DynamicTexture mapTexture;
     private ResourceLocation mapTextureId;
+    private boolean allowSpeedConfig = false;
 
     public TowerScreen(TowerMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -264,14 +267,22 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         waypointYField.setValue("0");
         addRouteWidget(waypointYField);
 
+        waypointSpeedField = new EditBox(font, x + leftX, waypointBaseY + 22, leftListWidth, 16, Component.translatable("screen.immersive_autopilot.waypoint_speed"));
+        waypointSpeedField.setValue("1.0");
+        addRouteWidget(waypointSpeedField);
+
+        waypointHoldField = new EditBox(font, x + leftX, waypointBaseY + 44, leftListWidth, 16, Component.translatable("screen.immersive_autopilot.waypoint_hold"));
+        waypointHoldField.setValue("0");
+        addRouteWidget(waypointHoldField);
+
         applyWaypointButton = Button.builder(Component.translatable("screen.immersive_autopilot.apply_waypoint"),
                 button -> applyWaypointEdit())
-                .bounds(x + leftX, waypointBaseY + 22, leftListWidth, 18).build();
+                .bounds(x + leftX, waypointBaseY + 66, leftListWidth, 18).build();
         addRouteWidget(applyWaypointButton);
 
         deleteWaypointButton = Button.builder(Component.translatable("screen.immersive_autopilot.delete_waypoint"),
                 button -> deleteSelectedWaypoint())
-                .bounds(x + leftX, waypointBaseY + 44, leftListWidth, 18).build();
+                .bounds(x + leftX, waypointBaseY + 88, leftListWidth, 18).build();
         addRouteWidget(deleteWaypointButton);
 
         setPageMode(PageMode.BASE);
@@ -468,10 +479,19 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         applyWaypointButton.active = active;
         deleteWaypointButton.active = active;
         waypointYField.active = active;
+        waypointSpeedField.active = active && allowSpeedConfig;
+        waypointHoldField.active = active;
+        waypointSpeedField.visible = allowSpeedConfig;
         if (active) {
             RouteWaypoint wp = activeRoute.getWaypoints().get(selectedPointIndex);
             if (!waypointYField.isFocused() || selectedPointIndex != lastSelectedPointIndex) {
                 waypointYField.setValue(Integer.toString(wp.getPos().getY()));
+            }
+            if (allowSpeedConfig && (!waypointSpeedField.isFocused() || selectedPointIndex != lastSelectedPointIndex)) {
+                waypointSpeedField.setValue(String.format(java.util.Locale.ROOT, "%.2f", wp.getSpeed()));
+            }
+            if (!waypointHoldField.isFocused() || selectedPointIndex != lastSelectedPointIndex) {
+                waypointHoldField.setValue(Integer.toString(wp.getHoldSeconds()));
             }
         }
         lastSelectedPointIndex = selectedPointIndex;
@@ -484,7 +504,10 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         RouteWaypoint current = activeRoute.getWaypoints().get(selectedPointIndex);
         int y = parseInt(waypointYField.getValue(), current.getPos().getY());
         float speed = current.getSpeed();
-        int hold = current.getHoldSeconds();
+        if (allowSpeedConfig) {
+            speed = clampFloat(waypointSpeedField.getValue(), current.getSpeed(), 0.0f, 1.0f);
+        }
+        int hold = parseInt(waypointHoldField.getValue(), current.getHoldSeconds());
         List<RouteWaypoint> newPoints = new ArrayList<>(activeRoute.getWaypoints());
         newPoints.set(selectedPointIndex, new RouteWaypoint(
                 new net.minecraft.core.BlockPos(current.getPos().getX(), y, current.getPos().getZ()),
@@ -610,6 +633,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             boundUuid = state.getBoundAircraft();
             boundName = state.getBoundName();
             targetAllInRange = state.isTargetAllInRange();
+            allowSpeedConfig = state.hasAutoSupport();
             updateTargetButtonLabel();
             targetModeButton.visible = state.isPowered() && pageMode == PageMode.BASE;
             targetModeButton.active = state.isPowered() && pageMode == PageMode.BASE;
@@ -707,6 +731,10 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             int listY = topPos + 126 - offset;
             graphics.drawString(font, Component.translatable("screen.immersive_autopilot.waypoints"), leftPos + rightX, listY - (font.lineHeight + 2), 0xFFFFFFFF, true);
             drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.waypoint_y"), waypointYField);
+            if (allowSpeedConfig) {
+                drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.waypoint_speed"), waypointSpeedField);
+            }
+            drawFieldLabel(graphics, Component.translatable("screen.immersive_autopilot.waypoint_hold"), waypointHoldField);
         }
 
         if (pageMode == PageMode.ROUTE) {
@@ -1291,6 +1319,21 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private static int parseInt(String value, int fallback) {
         try {
             return Integer.parseInt(value.trim());
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    private static float clampFloat(String value, float fallback, float min, float max) {
+        try {
+            float parsed = Float.parseFloat(value.trim());
+            if (parsed < min) {
+                return min;
+            }
+            if (parsed > max) {
+                return max;
+            }
+            return parsed;
         } catch (Exception e) {
             return fallback;
         }

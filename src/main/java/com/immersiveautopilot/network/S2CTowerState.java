@@ -58,6 +58,7 @@ public class S2CTowerState extends Message {
                 tower.getExitText(),
                 tower.isTargetAllInRange(),
                 tower.isPowered(),
+                tower.hasAutoSupportNearby(),
                 presets
         );
         immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(new S2CTowerState(state), player);
