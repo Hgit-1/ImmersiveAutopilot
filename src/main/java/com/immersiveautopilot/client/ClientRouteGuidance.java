@@ -28,6 +28,8 @@ public final class ClientRouteGuidance {
     private static RouteProgram active;
     private static boolean activeIsBackup = false;
     private static int completedCount = 0;
+    private static String primaryLabel = "";
+    private static String backupLabel = "";
 
     private ClientRouteGuidance() {
     }
@@ -56,17 +58,24 @@ public final class ClientRouteGuidance {
     }
 
     public static void acceptRoutes(int vehicleId, RouteProgram primaryRoute, RouteProgram backupRoute) {
+        acceptRoutes(vehicleId, primaryRoute, backupRoute, "", "");
+    }
+
+    public static void acceptRoutes(int vehicleId, RouteProgram primaryRoute, RouteProgram backupRoute, String primaryLabel, String backupLabel) {
         if (!inAirspace) {
             return;
         }
         activeVehicleId = vehicleId;
         primary = primaryRoute;
         backup = backupRoute;
+        ClientRouteGuidance.primaryLabel = primaryLabel == null ? "" : primaryLabel;
+        ClientRouteGuidance.backupLabel = backupLabel == null ? "" : backupLabel;
         activeIsBackup = primary == null && backup != null;
         active = primary != null ? primary : backup;
         completedCount = 0;
         completedInAirspace = false;
-        XaeroBridge.syncTemporaryWaypoints(primary, backup, activeIsBackup ? 0 : completedCount, activeIsBackup ? completedCount : 0);
+        XaeroBridge.syncTemporaryWaypoints(primary, backup, activeIsBackup ? 0 : completedCount, activeIsBackup ? completedCount : 0,
+                ClientRouteGuidance.primaryLabel, ClientRouteGuidance.backupLabel);
     }
 
     public static void tick() {
@@ -102,7 +111,8 @@ public final class ClientRouteGuidance {
             if (completedCount >= points.size()) {
                 finishRoute();
             } else {
-                XaeroBridge.syncTemporaryWaypoints(primary, backup, activeIsBackup ? 0 : completedCount, activeIsBackup ? completedCount : 0);
+                XaeroBridge.syncTemporaryWaypoints(primary, backup, activeIsBackup ? 0 : completedCount, activeIsBackup ? completedCount : 0,
+                        primaryLabel, backupLabel);
             }
         }
     }

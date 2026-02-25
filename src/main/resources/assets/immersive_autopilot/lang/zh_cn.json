@@ -22,6 +22,7 @@
   "screen.immersive_autopilot.tower_name": "塔台名称",
   "screen.immersive_autopilot.aircraft": "飞机",
   "screen.immersive_autopilot.waypoints": "航点",
+  "screen.immersive_autopilot.presets": "预设列表",
   "screen.immersive_autopilot.speed": "速度",
   "screen.immersive_autopilot.hold": "停留",
   "screen.immersive_autopilot.auto_request": "自动驾驶请求文本",

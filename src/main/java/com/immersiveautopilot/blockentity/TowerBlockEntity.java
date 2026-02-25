@@ -245,6 +245,9 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         boolean pilotChanged = lastPilot == null || !lastPilot.equals(pilotId);
         if (pilotChanged) {
             activePilots.put(vehicleId, pilotId);
+        }
+
+        if (entering || pilotChanged) {
             if (!entries.isEmpty()) {
                 RouteOfferManager.createOffer(pilotId, null, vehicle.getId(), entries, level.getGameTime());
                 immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
@@ -258,9 +261,6 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
                     pilot.displayClientMessage(Component.literal(msg), false);
                 }
             }
-        } else if (entering) {
-            immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
-                    new com.immersiveautopilot.network.S2CAirspaceState(vehicle.getId(), true), pilot);
         }
     }
 

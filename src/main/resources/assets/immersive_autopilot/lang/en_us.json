@@ -22,6 +22,7 @@
   "screen.immersive_autopilot.tower_name": "Tower Name",
   "screen.immersive_autopilot.aircraft": "Aircraft",
   "screen.immersive_autopilot.waypoints": "Waypoints",
+  "screen.immersive_autopilot.presets": "Presets",
   "screen.immersive_autopilot.speed": "Speed",
   "screen.immersive_autopilot.hold": "Hold",
   "screen.immersive_autopilot.auto_request": "Auto Request Text",

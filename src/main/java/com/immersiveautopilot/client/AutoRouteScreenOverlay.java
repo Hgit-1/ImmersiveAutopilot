@@ -25,6 +25,7 @@ public final class AutoRouteScreenOverlay {
     private static final int PANEL_WIDTH = 120;
     private static final int LINE_HEIGHT = 18;
     private static final int LINE_COUNT = 5;
+    private static final int CLEAR_BUTTON_WIDTH = 16;
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("immersive_aircraft", "textures/gui/container/inventory.png");
     private static final Map<Screen, Controller> CONTROLLERS = new WeakHashMap<>();
 
@@ -59,8 +60,8 @@ public final class AutoRouteScreenOverlay {
     private static final class Controller {
         private final VehicleScreen screen;
         private final List<EditBox> fields = new ArrayList<>();
+        private final List<Button> clearButtons = new ArrayList<>();
         private Button applyButton;
-        private Button clearButton;
         private int panelX;
         private int panelY;
         private int panelHeight;
@@ -73,30 +74,30 @@ public final class AutoRouteScreenOverlay {
             int left = screen.getX();
             int top = screen.getY();
             int imageWidth = getImageWidth(screen);
-            panelX = left + imageWidth + 8;
+            panelX = Math.max(4, left - PANEL_WIDTH - 8);
             panelY = top + 6;
-            panelHeight = 28 + LINE_COUNT * LINE_HEIGHT + 44;
+            panelHeight = 28 + LINE_COUNT * LINE_HEIGHT + 24;
 
-            int fieldWidth = PANEL_WIDTH - 12;
+            int fieldWidth = PANEL_WIDTH - 12 - CLEAR_BUTTON_WIDTH - 4;
             for (int i = 0; i < LINE_COUNT; i++) {
                 int y = panelY + 20 + i * LINE_HEIGHT;
                 EditBox field = new EditBox(screen.getMinecraft().font, panelX + 6, y, fieldWidth, 16, Component.literal(""));
                 field.setMaxLength(64);
-                event.addListener(field);
+                screen.addRenderableWidget(field);
                 fields.add(field);
+
+                Button clear = Button.builder(Component.literal("X"), button -> field.setValue(""))
+                        .bounds(panelX + 6 + fieldWidth + 4, y, CLEAR_BUTTON_WIDTH, 16)
+                        .build();
+                screen.addRenderableWidget(clear);
+                clearButtons.add(clear);
             }
 
             applyButton = Button.builder(Component.translatable("screen.immersive_autopilot.auto_routes_apply"),
                     button -> applyRoutes())
-                .bounds(panelX + 6, panelY + panelHeight - 40, fieldWidth, 18)
+                .bounds(panelX + 6, panelY + panelHeight - 20, PANEL_WIDTH - 12, 18)
                 .build();
-            event.addListener(applyButton);
-
-            clearButton = Button.builder(Component.translatable("screen.immersive_autopilot.auto_routes_clear"),
-                    button -> clearRoutes())
-                .bounds(panelX + 6, panelY + panelHeight - 20, fieldWidth, 18)
-                .build();
-            event.addListener(clearButton);
+            screen.addRenderableWidget(applyButton);
 
             AutoRouteClient.requestRoutes(screen.getMenu().getVehicle().getId());
         }

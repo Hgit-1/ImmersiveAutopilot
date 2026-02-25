@@ -11,6 +11,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 public class RadarMenu extends AbstractContainerMenu {
+    public static final int PANEL_WIDTH = 96;
+    public static final int PANEL_GAP = 8;
+    public static final int BASE_X = PANEL_WIDTH + PANEL_GAP;
     private final BlockPos pos;
     private final Level level;
     private final RadarBlockEntity radar;
@@ -25,7 +28,7 @@ public class RadarMenu extends AbstractContainerMenu {
         this.level = inventory.player.level();
         this.pos = radar.getBlockPos();
 
-        int startX = 62;
+        int startX = BASE_X + 62;
         int startY = 20;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
@@ -36,12 +39,12 @@ public class RadarMenu extends AbstractContainerMenu {
         int invY = 94;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, invY + row * 18));
+                addSlot(new Slot(inventory, col + row * 9 + 9, BASE_X + 8 + col * 18, invY + row * 18));
             }
         }
         int hotbarY = invY + 58;
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inventory, col, 8 + col * 18, hotbarY));
+            addSlot(new Slot(inventory, col, BASE_X + 8 + col * 18, hotbarY));
         }
     }
 

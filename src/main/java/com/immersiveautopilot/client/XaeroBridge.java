@@ -24,18 +24,23 @@ public final class XaeroBridge {
     }
 
     public static void syncTemporaryWaypoints(RouteProgram primary, RouteProgram backup) {
-        syncTemporaryWaypoints(primary, backup, 0, 0);
+        syncTemporaryWaypoints(primary, backup, 0, 0, "", "");
     }
 
     public static void syncTemporaryWaypoints(RouteProgram primary, RouteProgram backup, int primaryCompleted, int backupCompleted) {
+        syncTemporaryWaypoints(primary, backup, primaryCompleted, backupCompleted, "", "");
+    }
+
+    public static void syncTemporaryWaypoints(RouteProgram primary, RouteProgram backup, int primaryCompleted, int backupCompleted,
+                                              String primaryLabel, String backupLabel) {
         try {
             Object set = getCurrentWaypointSet();
             if (set == null) {
                 return;
             }
             clearOurTemporaryWaypoints(set);
-            addProgramWaypoints(set, primary, "P", "AQUA", primaryCompleted, "GREEN");
-            addProgramWaypoints(set, backup, "B", "PURPLE", backupCompleted, "GREEN");
+            addProgramWaypoints(set, primary, "P", "AQUA", primaryCompleted, "GREEN", primaryLabel);
+            addProgramWaypoints(set, backup, "B", "PURPLE", backupCompleted, "GREEN", backupLabel);
         } catch (Throwable ignored) {
         }
     }
@@ -272,7 +277,8 @@ public final class XaeroBridge {
         }
     }
 
-    private static void addProgramWaypoints(Object set, RouteProgram program, String labelPrefix, String colorName, int completedCount, String completedColor) throws Exception {
+    private static void addProgramWaypoints(Object set, RouteProgram program, String labelPrefix, String colorName, int completedCount,
+                                            String completedColor, String labelOverride) throws Exception {
         if (program == null) {
             return;
         }
@@ -296,11 +302,12 @@ public final class XaeroBridge {
         Method setYIncluded = waypointClass.getMethod("setYIncluded", boolean.class);
 
         int index = 1;
+        String baseName = labelOverride != null && !labelOverride.isBlank() ? labelOverride : program.getName();
         for (RouteWaypoint wp : program.getWaypoints()) {
             boolean completed = index <= completedCount;
             Object useColor = completed ? completeColor : color;
-            String name = NAME_PREFIX + labelPrefix + "-" + program.getName() + "-" + index;
-            String initials = labelPrefix + index;
+            String name = NAME_PREFIX + labelPrefix + "-" + baseName + "-" + index;
+            String initials = (labelOverride != null && !labelOverride.isBlank() ? labelOverride : labelPrefix) + index;
             Object xaeroWp = ctor.newInstance(
                     wp.getPos().getX(),
                     wp.getPos().getY(),

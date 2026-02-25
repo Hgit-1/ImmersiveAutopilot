@@ -63,7 +63,8 @@ public final class AutoRouteClient {
         for (RouteEntry entry : offers) {
             if (desired.equals(entry.name())) {
                 ClientRouteCache.setRoutes(vehicleId, entry.program(), null);
-                ClientRouteGuidance.acceptRoutes(vehicleId, entry.program(), null);
+                String label = entries.get(index).label();
+                ClientRouteGuidance.acceptRoutes(vehicleId, entry.program(), null, label == null ? "" : label, "");
                 NetworkHandler.sendToServer(new C2SPilotRouteDecision(vehicleId, true, entry.name(), ""));
                 ACCEPTED.put(vehicleId, true);
                 return true;

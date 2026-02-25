@@ -44,6 +44,8 @@ public class S2CTowerState extends Message {
             }
         }
         RouteProgram active = tower.getActiveRoute();
+        java.util.List<String> presets = new java.util.ArrayList<>(tower.getPresets().keySet());
+        presets.sort(String::compareToIgnoreCase);
         TowerState state = new TowerState(
                 pos,
                 tower.getScanRange(),
@@ -55,7 +57,8 @@ public class S2CTowerState extends Message {
                 tower.getEnterText(),
                 tower.getExitText(),
                 tower.isTargetAllInRange(),
-                tower.isPowered()
+                tower.isPowered(),
+                presets
         );
         immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(new S2CTowerState(state), player);
     }

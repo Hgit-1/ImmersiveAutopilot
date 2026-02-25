@@ -111,6 +111,8 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int routeScrollOffset = 0;
     private int baseContentHeight = 0;
     private int routeContentHeight = 0;
+    private List<String> presetNames = List.of();
+    private final List<PresetSlot> presetSlots = new ArrayList<>();
     private boolean draggingScroll = false;
     private int scrollDragStartY = 0;
     private int dragStartScroll = 0;
@@ -147,6 +149,22 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             this.baseX = baseX;
             this.baseY = baseY;
             this.height = height;
+        }
+    }
+
+    private static final class PresetSlot {
+        private final String name;
+        private final int x;
+        private final int y;
+        private final int w;
+        private final int h;
+
+        private PresetSlot(String name, int x, int y, int w, int h) {
+            this.name = name;
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
         }
     }
 
@@ -622,6 +640,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                     }
                 }
             }
+            if (state.getPresetNames() != null) {
+                presetNames = state.getPresetNames();
+            }
             if (selectedPointIndex >= activeRoute.getWaypoints().size()) {
                 selectedPointIndex = -1;
             }
@@ -660,6 +681,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         } else {
             drawGrid(graphics, partialTick);
             drawRouteList(graphics);
+            drawPresetList(graphics);
         }
 
         super.render(graphics, mouseX, mouseY, partialTick);
@@ -789,6 +811,32 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             String line = (index + 1) + ": " + wp.getPos().getX() + "," + wp.getPos().getZ() + " Y=" + wp.getPos().getY();
             int color = index == selectedPointIndex ? 0xFFFFC04D : 0xFFFFFFFF;
             graphics.drawString(font, line, listX, listY + i * ROW_HEIGHT, color, true);
+        }
+    }
+
+    private void drawPresetList(GuiGraphics graphics) {
+        presetSlots.clear();
+        if (presetNames.isEmpty() || deleteWaypointButton == null) {
+            return;
+        }
+        int listX = leftPos + leftX;
+        int startY = deleteWaypointButton.getY() + deleteWaypointButton.getHeight() + 8;
+        int labelY = startY;
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.presets"), listX, labelY, 0xFFFFFFFF, true);
+
+        int y = labelY + font.lineHeight + 4;
+        int width = leftListWidth;
+        int height = 16;
+        for (String name : presetNames) {
+            if (name == null || name.isBlank()) {
+                continue;
+            }
+            int drawY = y;
+            int bg = 0xFF2A2F36;
+            graphics.fill(listX, drawY, listX + width, drawY + height, bg);
+            graphics.drawString(font, name, listX + 4, drawY + 4, 0xFFFFFFFF, false);
+            presetSlots.add(new PresetSlot(name, listX, drawY, width, height));
+            y += height + 4;
         }
     }
 
@@ -1029,6 +1077,17 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 selectedPointIndex = index;
                 updateWaypointControls();
                 return true;
+            }
+        }
+        if (pageMode == PageMode.ROUTE && button == 0) {
+            for (PresetSlot slot : presetSlots) {
+                if (mouseX >= slot.x && mouseX <= slot.x + slot.w
+                        && mouseY >= slot.y && mouseY <= slot.y + slot.h) {
+                    routeNameField.setValue(slot.name);
+                    NetworkHandler.sendToServer(new C2SLoadPreset(menu.getPos(), slot.name));
+                    localRouteDirty = false;
+                    return true;
+                }
             }
         }
         if (pageMode == PageMode.ROUTE && isInsideGrid(mouseX, mouseY)) {

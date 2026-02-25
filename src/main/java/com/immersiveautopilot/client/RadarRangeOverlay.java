@@ -62,7 +62,7 @@ public final class RadarRangeOverlay {
         for (TowerBlockEntity tower : towers) {
             maxRange = Math.max(maxRange, tower.getScanRange());
         }
-        int radius = Math.min(128, maxRange);
+        int radius = Math.max(1, maxRange);
         int minX = player.blockPosition().getX() - radius;
         int maxX = player.blockPosition().getX() + radius;
         int minZ = player.blockPosition().getZ() - radius;

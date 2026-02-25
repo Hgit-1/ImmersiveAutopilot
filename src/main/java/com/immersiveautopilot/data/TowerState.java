@@ -4,6 +4,9 @@ import com.immersiveautopilot.route.RouteProgram;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 public class TowerState {
@@ -18,10 +21,11 @@ public class TowerState {
     private final String exitText;
     private final boolean targetAllInRange;
     private final boolean powered;
+    private final List<String> presetNames;
 
     public TowerState(BlockPos pos, int scanRange, UUID boundAircraft, String boundName, RouteProgram activeRoute,
                       String towerName, String autoRequestText, String enterText, String exitText,
-                      boolean targetAllInRange, boolean powered) {
+                      boolean targetAllInRange, boolean powered, List<String> presetNames) {
         this.pos = pos;
         this.scanRange = scanRange;
         this.boundAircraft = boundAircraft;
@@ -33,6 +37,7 @@ public class TowerState {
         this.exitText = exitText == null ? "" : exitText;
         this.targetAllInRange = targetAllInRange;
         this.powered = powered;
+        this.presetNames = presetNames == null ? List.of() : new ArrayList<>(presetNames);
     }
 
     public BlockPos getPos() {
@@ -79,6 +84,10 @@ public class TowerState {
         return powered;
     }
 
+    public List<String> getPresetNames() {
+        return Collections.unmodifiableList(presetNames);
+    }
+
     public void writeToBuf(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
         buf.writeInt(scanRange);
@@ -99,6 +108,10 @@ public class TowerState {
         buf.writeUtf(exitText);
         buf.writeBoolean(targetAllInRange);
         buf.writeBoolean(powered);
+        buf.writeInt(presetNames.size());
+        for (String name : presetNames) {
+            buf.writeUtf(name == null ? "" : name);
+        }
     }
 
     public static TowerState readFromBuf(RegistryFriendlyByteBuf buf) {
@@ -119,6 +132,14 @@ public class TowerState {
         String exitText = buf.readUtf();
         boolean targetAll = buf.readBoolean();
         boolean powered = buf.readBoolean();
-        return new TowerState(pos, range, bound, boundName, route, towerName, autoText, enterText, exitText, targetAll, powered);
+        int presetCount = buf.readInt();
+        List<String> presets = new ArrayList<>(Math.max(0, presetCount));
+        for (int i = 0; i < presetCount; i++) {
+            String preset = buf.readUtf();
+            if (preset != null && !preset.isBlank()) {
+                presets.add(preset);
+            }
+        }
+        return new TowerState(pos, range, bound, boundName, route, towerName, autoText, enterText, exitText, targetAll, powered, presets);
     }
 }
