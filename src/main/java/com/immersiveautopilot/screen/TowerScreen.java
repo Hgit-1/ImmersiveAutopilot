@@ -471,11 +471,12 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     private void updateWaypointControls() {
         boolean active = selectedPointIndex >= 0 && selectedPointIndex < activeRoute.getWaypoints().size();
+        boolean routeMode = pageMode == PageMode.ROUTE;
         applyWaypointButton.active = active;
         deleteWaypointButton.active = active;
         waypointYField.active = active;
-        waypointSpeedField.active = active && allowSpeedConfig;
-        waypointSpeedField.visible = allowSpeedConfig;
+        waypointSpeedField.active = routeMode && active && allowSpeedConfig;
+        waypointSpeedField.visible = routeMode && allowSpeedConfig;
         if (active) {
             RouteWaypoint wp = activeRoute.getWaypoints().get(selectedPointIndex);
             if (!waypointYField.isFocused() || selectedPointIndex != lastSelectedPointIndex) {

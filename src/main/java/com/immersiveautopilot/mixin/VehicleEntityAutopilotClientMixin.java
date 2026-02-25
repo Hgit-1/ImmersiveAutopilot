@@ -73,12 +73,28 @@ public class VehicleEntityAutopilotClientMixin {
         Vec3 forwardNorm = forwardVec.normalize();
         double currentPitch = Math.asin(Mth.clamp(forwardNorm.y, -1.0, 1.0));
         double pitchError = desiredPitch - currentPitch;
-        float movementY = (float) Mth.clamp(pitchError / (Math.PI / 6.0), -1.0, 1.0);
+        float movementZ = (float) Mth.clamp(-pitchError / (Math.PI / 6.0), -1.0, 1.0);
 
-        vehicle.setInputs(movementX, movementY, 1.0f);
+        float movementY = 0.0f;
+        float targetSpeed = 1.0f;
+        if (vehicle instanceof EngineVehicle engineVehicle) {
+            targetSpeed = Mth.clamp(target.getSpeed(), 0.0f, 1.0f);
+            float currentTarget = engineVehicle.getEngineTarget();
+            if (currentTarget < targetSpeed - 0.02f) {
+                movementY = 1.0f;
+            } else if (currentTarget > targetSpeed + 0.02f) {
+                movementY = -1.0f;
+            }
+        }
+
+        if (vehicle.onGround() && toTarget.y > 2.0) {
+            movementY = 1.0f;
+            movementZ = Math.min(movementZ, -0.6f);
+        }
+
+        vehicle.setInputs(movementX, movementY, movementZ);
 
         if (vehicle instanceof EngineVehicle engineVehicle) {
-            float targetSpeed = Mth.clamp(target.getSpeed(), 0.0f, 1.0f);
             if (Math.abs(engineVehicle.getEngineTarget() - targetSpeed) > 0.01f) {
                 engineVehicle.setEngineTarget(targetSpeed);
             }

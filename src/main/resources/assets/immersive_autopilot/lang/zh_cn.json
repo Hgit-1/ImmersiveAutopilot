@@ -59,6 +59,7 @@
   "key.categories.immersive_autopilot": "沉浸式自动驾驶",
   "key.immersive_autopilot.autopilot_toggle": "自动驾驶开关",
   "message.immersive_autopilot.traffic_alert": "交通警报: %s vs %s",
+  "hud.immersive_autopilot.autopilot_on": "自动驾驶已开启",
   "item.immersive_autopilot.radar_range_sensor": "雷达范围感知器",
   "item.immersive_autopilot.radar_ident_module": "雷达识别模块",
   "item.immersive_autopilot.autopilot_unit": "自动驾驶仪",
