@@ -19,8 +19,8 @@ public class VehicleEntityAutopilotStateMixin implements AutopilotStateAccess {
             SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.BOOLEAN);
 
     @Inject(method = "defineSynchedData", at = @At("TAIL"))
-    private void immersiveAutopilot$defineData(CallbackInfo ci) {
-        ((VehicleEntity) (Object) this).getEntityData().define(IMMERSIVE_AUTOPILOT_ENABLED, false);
+    private void immersiveAutopilot$defineData(SynchedEntityData.Builder builder, CallbackInfo ci) {
+        builder.define(IMMERSIVE_AUTOPILOT_ENABLED, false);
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
