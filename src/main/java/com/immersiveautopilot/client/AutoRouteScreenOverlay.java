@@ -83,13 +83,13 @@ public final class AutoRouteScreenOverlay {
                 int y = panelY + 20 + i * LINE_HEIGHT;
                 EditBox field = new EditBox(screen.getMinecraft().font, panelX + 6, y, fieldWidth, 16, Component.literal(""));
                 field.setMaxLength(64);
-                screen.addRenderableWidget(field);
+                event.addListener(field);
                 fields.add(field);
 
                 Button clear = Button.builder(Component.literal("X"), button -> field.setValue(""))
                         .bounds(panelX + 6 + fieldWidth + 4, y, CLEAR_BUTTON_WIDTH, 16)
                         .build();
-                screen.addRenderableWidget(clear);
+                event.addListener(clear);
                 clearButtons.add(clear);
             }
 
@@ -97,7 +97,7 @@ public final class AutoRouteScreenOverlay {
                     button -> applyRoutes())
                 .bounds(panelX + 6, panelY + panelHeight - 20, PANEL_WIDTH - 12, 18)
                 .build();
-            screen.addRenderableWidget(applyButton);
+            event.addListener(applyButton);
 
             AutoRouteClient.requestRoutes(screen.getMenu().getVehicle().getId());
         }
