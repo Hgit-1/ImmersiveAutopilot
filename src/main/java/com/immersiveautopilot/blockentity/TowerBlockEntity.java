@@ -38,6 +38,7 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     public static final int MAX_SCAN_RANGE = 1024;
 
     private int scanRange = DEFAULT_SCAN_RANGE;
+    private int lastSyncedScanRange = DEFAULT_SCAN_RANGE;
     private WorldConfigData worldConfig;
     private UUID boundAircraft;
     private String towerName = "default_tower";
@@ -170,6 +171,11 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
             return;
         }
         scanRange = computeScanRange();
+        if (scanRange != lastSyncedScanRange) {
+            lastSyncedScanRange = scanRange;
+            setChanged();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
         if (worldConfig == null && level instanceof ServerLevel serverLevel) {
             worldConfig = WorldConfig.get(serverLevel);
             // Scan range is fixed to base + radar bonuses.
@@ -414,6 +420,7 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
         scanRange = tag.getInt("ScanRange");
+        lastSyncedScanRange = scanRange;
         if (tag.hasUUID("BoundAircraft")) {
             boundAircraft = tag.getUUID("BoundAircraft");
         } else {

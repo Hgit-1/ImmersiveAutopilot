@@ -86,7 +86,8 @@ public final class AutoRouteScreenOverlay {
                 event.addListener(field);
                 fields.add(field);
 
-                Button clear = Button.builder(Component.literal("X"), button -> field.setValue(""))
+                int index = i;
+                Button clear = Button.builder(Component.literal("X"), button -> clearLine(index))
                         .bounds(panelX + 6 + fieldWidth + 4, y, CLEAR_BUTTON_WIDTH, 16)
                         .build();
                 event.addListener(clear);
@@ -163,6 +164,14 @@ public final class AutoRouteScreenOverlay {
             AutoRouteClient.setRoutes(screen.getMenu().getVehicle().getId(), List.of());
             immersive_aircraft.cobalt.network.NetworkHandler.sendToServer(
                     new com.immersiveautopilot.network.C2SSetAutoRoutes(screen.getMenu().getVehicle().getId(), List.of(), List.of()));
+        }
+
+        private void clearLine(int index) {
+            if (index < 0 || index >= fields.size()) {
+                return;
+            }
+            fields.get(index).setValue("");
+            applyRoutes();
         }
 
         private List<AutoRouteClient.Entry> buildEntries(List<String> names, List<String> labels) {

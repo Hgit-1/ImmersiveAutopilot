@@ -65,11 +65,13 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
     }
 
     private void drawAircraftMap(GuiGraphics graphics) {
-        int mapSize = 56;
-        int x0 = leftPos + 8;
-        int y0 = topPos + 18;
+        int mapSize = 64;
+        int x0 = leftPos + 16;
+        int y0 = topPos + 20;
         int x1 = x0 + mapSize;
         int y1 = y0 + mapSize;
+        graphics.fill(x0 - 2, y0 - 2, x1 + 2, y1 + 2, 0xFF2A2F36);
+        graphics.fill(x0 - 1, y0 - 1, x1 + 1, y1 + 1, 0xFF0B0D10);
         graphics.fill(x0, y0, x1, y1, 0xFF0B0D10);
         for (int i = 0; i <= mapSize; i += 16) {
             graphics.hLine(x0, x1, y0 + i, 0x5522262B);
@@ -97,7 +99,8 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         }
 
         int listX = leftPos + 8;
-        int listY = y1 + 8;
+        int listY = y1 + 16;
+        graphics.drawString(font, Component.translatable("screen.immersive_autopilot.aircraft"), listX, listY - 10, 0xFFE0E0E0, false);
         int max = Math.min(5, list.size());
         for (int i = 0; i < max; i++) {
             AircraftSnapshot snapshot = list.get(i);
