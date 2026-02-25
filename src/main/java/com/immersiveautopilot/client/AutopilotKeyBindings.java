@@ -12,6 +12,12 @@ public final class AutopilotKeyBindings {
             GLFW.GLFW_KEY_COMMA,
             CATEGORY
     );
+    public static final KeyMapping CYCLE_ROUTE = new KeyMapping(
+            "key.immersive_autopilot.route_cycle",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_APOSTROPHE,
+            CATEGORY
+    );
 
     private AutopilotKeyBindings() {
     }

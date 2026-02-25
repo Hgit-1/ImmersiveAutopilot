@@ -55,6 +55,21 @@ public final class AutoRouteClient {
         return INDICES.getOrDefault(vehicleId, 0);
     }
 
+    public static void cycleRoute(int vehicleId) {
+        List<Entry> entries = ROUTES.getOrDefault(vehicleId, Collections.emptyList());
+        if (entries.isEmpty()) {
+            return;
+        }
+        int current = INDICES.getOrDefault(vehicleId, 0);
+        int next = (current + 1) % entries.size();
+        INDICES.put(vehicleId, next);
+        ACCEPTED.put(vehicleId, false);
+        PENDING.remove(vehicleId);
+        if (!trySelectByIndex(vehicleId, next)) {
+            requestRoutes(vehicleId);
+        }
+    }
+
     public static boolean tryAutoAccept(int vehicleId, List<RouteEntry> offers) {
         return false;
     }
@@ -155,6 +170,44 @@ public final class AutoRouteClient {
             ClientRouteGuidance.requestRouteChoice(vehicleId, pending);
             return;
         }
+    }
+
+    private static boolean trySelectByIndex(int vehicleId, int index) {
+        List<Entry> entries = ROUTES.get(vehicleId);
+        if (entries == null || entries.isEmpty()) {
+            return false;
+        }
+        if (index < 0 || index >= entries.size()) {
+            return false;
+        }
+        String desired = entries.get(index).routeName();
+        if (desired == null || desired.isBlank()) {
+            return false;
+        }
+        List<OfferCandidate> offers = OFFERS.getOrDefault(vehicleId, Collections.emptyList());
+        if (offers.isEmpty()) {
+            return false;
+        }
+        List<OfferCandidate> matches = new ArrayList<>();
+        for (OfferCandidate candidate : offers) {
+            if (desired.equals(candidate.entry().name())) {
+                matches.add(candidate);
+            }
+        }
+        if (matches.isEmpty()) {
+            return false;
+        }
+        if (matches.size() == 1) {
+            acceptOffer(vehicleId, matches.get(0), index);
+            return true;
+        }
+        List<Entry> pending = new ArrayList<>();
+        for (OfferCandidate match : matches) {
+            pending.add(new Entry(match.entry().name(), match.operatorName()));
+        }
+        PENDING.put(vehicleId, pending);
+        ClientRouteGuidance.requestRouteChoice(vehicleId, pending);
+        return true;
     }
 
     private static void acceptOffer(int vehicleId, OfferCandidate candidate, int index) {

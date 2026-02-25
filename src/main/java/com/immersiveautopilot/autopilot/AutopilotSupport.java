@@ -1,7 +1,10 @@
 package com.immersiveautopilot.autopilot;
 
 import com.immersiveautopilot.item.ModItems;
+import immersive_aircraft.entity.AirshipEntity;
+import immersive_aircraft.entity.GyrodyneEntity;
 import immersive_aircraft.entity.InventoryVehicleEntity;
+import immersive_aircraft.entity.QuadrocopterEntity;
 import immersive_aircraft.entity.VehicleEntity;
 import immersive_aircraft.entity.inventory.VehicleInventoryDescription;
 import net.minecraft.world.item.ItemStack;
@@ -19,6 +22,19 @@ public final class AutopilotSupport {
             }
         }
         return false;
+    }
+
+    public static boolean isAutopilotSupported(VehicleEntity vehicle) {
+        if (vehicle instanceof QuadrocopterEntity) {
+            return false;
+        }
+        if (vehicle instanceof AirshipEntity) {
+            return false;
+        }
+        if (vehicle instanceof GyrodyneEntity) {
+            return false;
+        }
+        return true;
     }
 
     public static boolean isAutopilotEnabled(VehicleEntity vehicle) {

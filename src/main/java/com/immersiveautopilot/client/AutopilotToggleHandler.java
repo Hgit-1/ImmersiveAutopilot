@@ -23,6 +23,10 @@ public final class AutopilotToggleHandler {
         if (!AutopilotSupport.hasAutopilot(vehicle)) {
             return;
         }
+        if (!AutopilotSupport.isAutopilotSupported(vehicle)) {
+            AutopilotStatusOverlay.showUnsupported();
+            return;
+        }
         boolean next = !AutopilotSupport.isAutopilotEnabled(vehicle);
         AutopilotSupport.setAutopilotEnabled(vehicle, next);
         NetworkHandler.sendToServer(new C2SToggleAutopilot(vehicle.getId(), next));

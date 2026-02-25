@@ -22,8 +22,14 @@ public final class AutopilotStatusOverlay {
     private static final int COLOR_WARN = 0xFFFFA142;
     private static final int COLOR_ALERT = 0xFFFF4040;
     private static final double TERRAIN_CHECK_DISTANCE = 16.0;
+    private static final long UNSUPPORTED_DURATION_MS = 3000L;
+    private static long unsupportedUntil = 0L;
 
     private AutopilotStatusOverlay() {
+    }
+
+    public static void showUnsupported() {
+        unsupportedUntil = System.currentTimeMillis() + UNSUPPORTED_DURATION_MS;
     }
 
     @SubscribeEvent
@@ -41,6 +47,11 @@ public final class AutopilotStatusOverlay {
         int baseY = height - 68;
 
         int line = 0;
+        if (System.currentTimeMillis() < unsupportedUntil) {
+            Component text = Component.translatable("hud.immersive_autopilot.autopilot_unsupported");
+            drawCentered(graphics, mc, text, baseY + line * (mc.font.lineHeight + 2), COLOR_ALERT);
+            line++;
+        }
         if (AutopilotSupport.isAutopilotEnabled(vehicle)) {
             Component text;
             int color = COLOR_AUTOPILOT;

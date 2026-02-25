@@ -2,6 +2,8 @@ package com.immersiveautopilot.client;
 
 import com.immersiveautopilot.ImmersiveAutopilot;
 import immersive_aircraft.client.gui.VehicleScreen;
+import immersive_aircraft.entity.CargoAirshipEntity;
+import immersive_aircraft.entity.WarshipEntity;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -37,6 +39,9 @@ public final class AutoRouteScreenOverlay {
         if (!(event.getScreen() instanceof VehicleScreen screen)) {
             return;
         }
+        if (!supportsAutoRoutes(screen)) {
+            return;
+        }
         Controller controller = new Controller(screen);
         controller.init(event);
         CONTROLLERS.put(screen, controller);
@@ -55,6 +60,19 @@ public final class AutoRouteScreenOverlay {
     @SubscribeEvent
     public static void onScreenClose(ScreenEvent.Closing event) {
         CONTROLLERS.remove(event.getScreen());
+    }
+
+    private static boolean supportsAutoRoutes(VehicleScreen screen) {
+        if (screen.getMenu() == null || screen.getMenu().getVehicle() == null) {
+            return true;
+        }
+        if (screen.getMenu().getVehicle() instanceof CargoAirshipEntity) {
+            return false;
+        }
+        if (screen.getMenu().getVehicle() instanceof WarshipEntity) {
+            return false;
+        }
+        return true;
     }
 
     private static final class Controller {

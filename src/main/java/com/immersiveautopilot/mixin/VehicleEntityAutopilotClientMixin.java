@@ -41,6 +41,9 @@ public class VehicleEntityAutopilotClientMixin {
         if (!AutopilotSupport.hasAutopilot(vehicle)) {
             return;
         }
+        if (!AutopilotSupport.isAutopilotSupported(vehicle)) {
+            return;
+        }
         if (!ClientRouteGuidance.isActiveFor(vehicle.getId())) {
             if (ClientRouteGuidance.isInAirspace() || !ClientRouteGuidance.hasActiveRoute()) {
                 vehicle.setInputs(0.0f, 0.0f, 0.0f);

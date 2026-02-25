@@ -31,6 +31,10 @@ public final class AutoRouteClientTracker {
         if (vehicleId != -1 && vehicleId != lastVehicleId) {
             AutoRouteClient.requestRoutes(vehicleId);
         }
+        if (vehicleId == -1 && lastVehicleId != -1) {
+            ClientRouteGuidance.onAirspaceExit(lastVehicleId);
+            XaeroBridge.clearTemporaryWaypoints();
+        }
         lastVehicleId = vehicleId;
     }
 }

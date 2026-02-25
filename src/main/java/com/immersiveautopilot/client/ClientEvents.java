@@ -24,5 +24,6 @@ public final class ClientEvents {
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(AutopilotKeyBindings.TOGGLE_AUTOPILOT);
+        event.register(AutopilotKeyBindings.CYCLE_ROUTE);
     }
 }
