@@ -22,6 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class VehicleEntityAutopilotClientMixin {
     @Unique
     private float immersiveAutopilot$lastSentTarget = -1.0f;
+    @Unique
+    private int immersiveAutopilot$lastSentTick = 0;
 
     @Inject(method = "tickPilot", at = @At("TAIL"))
     private void immersiveAutopilot$applyAutopilot(CallbackInfo ci) {
@@ -79,12 +81,6 @@ public class VehicleEntityAutopilotClientMixin {
         float targetSpeed = 1.0f;
         if (vehicle instanceof EngineVehicle engineVehicle) {
             targetSpeed = Mth.clamp(target.getSpeed(), 0.0f, 1.0f);
-            float currentTarget = engineVehicle.getEngineTarget();
-            if (currentTarget < targetSpeed - 0.02f) {
-                movementY = 1.0f;
-            } else if (currentTarget > targetSpeed + 0.02f) {
-                movementY = -1.0f;
-            }
         }
 
         if (vehicle.onGround() && toTarget.y > 2.0) {
@@ -100,12 +96,16 @@ public class VehicleEntityAutopilotClientMixin {
         vehicle.setInputs(movementX, movementY, movementZ);
 
         if (vehicle instanceof EngineVehicle engineVehicle) {
-            if (Math.abs(engineVehicle.getEngineTarget() - targetSpeed) > 0.01f) {
-                engineVehicle.setEngineTarget(targetSpeed);
+            float current = engineVehicle.getEngineTarget();
+            float blended = Mth.lerp(0.08f, current, targetSpeed);
+            if (Math.abs(current - blended) > 0.001f) {
+                engineVehicle.setEngineTarget(blended);
             }
-            if (Math.abs(immersiveAutopilot$lastSentTarget - targetSpeed) > 0.01f) {
-                NetworkHandler.sendToServer(new EnginePowerMessage(targetSpeed));
-                immersiveAutopilot$lastSentTarget = targetSpeed;
+            immersiveAutopilot$lastSentTick++;
+            if (Math.abs(immersiveAutopilot$lastSentTarget - blended) > 0.02f || immersiveAutopilot$lastSentTick >= 10) {
+                NetworkHandler.sendToServer(new EnginePowerMessage(blended));
+                immersiveAutopilot$lastSentTarget = blended;
+                immersiveAutopilot$lastSentTick = 0;
             }
         }
     }

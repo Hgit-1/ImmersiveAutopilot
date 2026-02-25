@@ -60,6 +60,7 @@
   "key.immersive_autopilot.autopilot_toggle": "Toggle Autopilot",
   "message.immersive_autopilot.traffic_alert": "TRAFFIC ALERT: %s vs %s",
   "hud.immersive_autopilot.autopilot_on": "AUTOPILOT: ON",
+  "hud.immersive_autopilot.terrain_alert": "TERRAIN: PULL UP",
   "item.immersive_autopilot.radar_range_sensor": "Radar Range Sensor",
   "item.immersive_autopilot.radar_ident_module": "Radar Identification Module",
   "item.immersive_autopilot.autopilot_unit": "Autopilot Unit",
