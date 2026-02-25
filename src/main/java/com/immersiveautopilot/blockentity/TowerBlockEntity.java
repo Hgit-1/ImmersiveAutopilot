@@ -165,6 +165,15 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         return presets.get(name);
     }
 
+    public void deletePreset(String name) {
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        if (presets.remove(name) != null) {
+            setChanged();
+        }
+    }
+
     public boolean isPowered() {
         return level != null && level.hasNeighborSignal(worldPosition);
     }

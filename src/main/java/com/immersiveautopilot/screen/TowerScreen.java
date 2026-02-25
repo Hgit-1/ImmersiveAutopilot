@@ -114,6 +114,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
     private int routeContentHeight = 0;
     private List<String> presetNames = List.of();
     private final List<PresetSlot> presetSlots = new ArrayList<>();
+    private String pendingPresetDelete = null;
     private boolean draggingScroll = false;
     private int scrollDragStartY = 0;
     private int dragStartScroll = 0;
@@ -160,13 +161,21 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         private final int y;
         private final int w;
         private final int h;
+        private final int deleteX;
+        private final int deleteY;
+        private final int deleteW;
+        private final int deleteH;
 
-        private PresetSlot(String name, int x, int y, int w, int h) {
+        private PresetSlot(String name, int x, int y, int w, int h, int deleteX, int deleteY, int deleteW, int deleteH) {
             this.name = name;
             this.x = x;
             this.y = y;
             this.w = w;
             this.h = h;
+            this.deleteX = deleteX;
+            this.deleteY = deleteY;
+            this.deleteW = deleteW;
+            this.deleteH = deleteH;
         }
     }
 
@@ -572,6 +581,16 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         localRouteDirty = false;
     }
 
+    private void deletePreset(String name) {
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        List<String> updated = new ArrayList<>(presetNames);
+        updated.removeIf(name::equals);
+        presetNames = updated;
+        NetworkHandler.sendToServer(new com.immersiveautopilot.network.C2SDeletePreset(menu.getPos(), name));
+    }
+
     private void sendRoute() {
         int targetId = resolveTargetEntityId();
         if (targetId == -1) {
@@ -658,6 +677,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             }
             if (state.getPresetNames() != null) {
                 presetNames = state.getPresetNames();
+                if (pendingPresetDelete != null && !presetNames.contains(pendingPresetDelete)) {
+                    pendingPresetDelete = null;
+                }
             }
             if (selectedPointIndex >= activeRoute.getWaypoints().size()) {
                 selectedPointIndex = -1;
@@ -846,6 +868,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int y = labelY + font.lineHeight + 4;
         int width = leftListWidth;
         int height = 16;
+        int deleteWidth = 16;
         for (String name : presetNames) {
             if (name == null || name.isBlank()) {
                 continue;
@@ -853,8 +876,18 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             int drawY = y;
             int bg = 0xFF2A2F36;
             graphics.fill(listX, drawY, listX + width, drawY + height, bg);
-            graphics.drawString(font, name, listX + 4, drawY + 4, 0xFFFFFFFF, false);
-            presetSlots.add(new PresetSlot(name, listX, drawY, width, height));
+            boolean pendingDelete = name.equals(pendingPresetDelete);
+            Component label = pendingDelete
+                    ? Component.translatable("screen.immersive_autopilot.preset_delete_confirm")
+                    : Component.literal(name);
+            int labelColor = pendingDelete ? 0xFFFF4040 : 0xFFFFFFFF;
+            graphics.drawString(font, label, listX + 4, drawY + 4, labelColor, false);
+
+            int deleteX = listX + width - deleteWidth;
+            int deleteY = drawY;
+            graphics.fill(deleteX, deleteY, deleteX + deleteWidth, deleteY + height, 0xFF3A2C2C);
+            graphics.drawString(font, "X", deleteX + 5, deleteY + 4, 0xFFFFFFFF, false);
+            presetSlots.add(new PresetSlot(name, listX, drawY, width, height, deleteX, deleteY, deleteWidth, height));
             y += height + 4;
         }
     }
@@ -1077,6 +1110,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        boolean clickedPresetArea = false;
         if (button == 0 && isInsideScrollbar(mouseX, mouseY)) {
             draggingScroll = true;
             scrollDragStartY = (int) mouseY;
@@ -1100,8 +1134,20 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         }
         if (pageMode == PageMode.ROUTE && button == 0) {
             for (PresetSlot slot : presetSlots) {
+                if (mouseX >= slot.deleteX && mouseX <= slot.deleteX + slot.deleteW
+                        && mouseY >= slot.deleteY && mouseY <= slot.deleteY + slot.deleteH) {
+                    clickedPresetArea = true;
+                    if (slot.name.equals(pendingPresetDelete)) {
+                        pendingPresetDelete = null;
+                        deletePreset(slot.name);
+                    } else {
+                        pendingPresetDelete = slot.name;
+                    }
+                    return true;
+                }
                 if (mouseX >= slot.x && mouseX <= slot.x + slot.w
                         && mouseY >= slot.y && mouseY <= slot.y + slot.h) {
+                    clickedPresetArea = true;
                     routeNameField.setValue(slot.name);
                     NetworkHandler.sendToServer(new C2SLoadPreset(menu.getPos(), slot.name));
                     localRouteDirty = false;
@@ -1140,6 +1186,9 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
                 startDrag(mouseX, mouseY);
                 return true;
             }
+        }
+        if (pageMode == PageMode.ROUTE && button == 0 && pendingPresetDelete != null && !clickedPresetArea) {
+            pendingPresetDelete = null;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }

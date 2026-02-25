@@ -58,6 +58,7 @@
   "screen.immersive_autopilot.auto_routes_clear": "Clear",
   "screen.immersive_autopilot.auto_route_choice_title": "Choose Route",
   "screen.immersive_autopilot.auto_route_choice_confirm": "Confirm",
+  "screen.immersive_autopilot.preset_delete_confirm": "Delete?",
   "key.categories.immersive_autopilot": "Immersive Autopilot",
   "key.immersive_autopilot.autopilot_toggle": "Toggle Autopilot",
   "key.immersive_autopilot.route_cycle": "Cycle Route",

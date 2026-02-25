@@ -58,6 +58,7 @@
   "screen.immersive_autopilot.auto_routes_clear": "清空",
   "screen.immersive_autopilot.auto_route_choice_title": "选择航路",
   "screen.immersive_autopilot.auto_route_choice_confirm": "确定",
+  "screen.immersive_autopilot.preset_delete_confirm": "是否删除？",
   "key.categories.immersive_autopilot": "沉浸式自动驾驶",
   "key.immersive_autopilot.autopilot_toggle": "自动驾驶开关",
   "key.immersive_autopilot.route_cycle": "切换航路",

@@ -1,14 +1,14 @@
 modLoader="javafml"
 loaderVersion="[1,)"
-license="All Rights Reserved"
+license="GPL-3.0-Only"
 
 [[mods]]
 modId="${mod_id}"
 version="${version}"
 displayName="${mod_name}"
 logoFile="logo.png"
-credits=""
-authors=""
+credits="Codex, Xaero Map (Auto guiding info provider), Immersive Aircraft, Man of Many Planes (Immersive Aircraft's addon)"
+authors="Halpha1st | MDFZ Minecraft Team"
 description='''Autopilot towers, radar coverage, and route guidance for Immersive Aircraft.'''
 
 [[dependencies.${mod_id}]]
@@ -28,7 +28,7 @@ side="BOTH"
 [[dependencies.${mod_id}]]
 modId="immersive_aircraft"
 mandatory=true
-versionRange="[1.2.2,)"
+versionRange="[0,)"
 ordering="AFTER"
 side="BOTH"
 
