@@ -18,8 +18,12 @@ public class AircraftSnapshot {
     private final float health;
     private final double posX;
     private final double posZ;
+    private final double velX;
+    private final double velY;
+    private final double velZ;
 
-    public AircraftSnapshot(int entityId, UUID uuid, String name, ResourceLocation typeId, double distance, double altitude, double speed, float enginePower, float fuelUtilization, float health, double posX, double posZ) {
+    public AircraftSnapshot(int entityId, UUID uuid, String name, ResourceLocation typeId, double distance, double altitude, double speed,
+                            float enginePower, float fuelUtilization, float health, double posX, double posZ, double velX, double velY, double velZ) {
         this.entityId = entityId;
         this.uuid = uuid;
         this.name = name;
@@ -32,6 +36,9 @@ public class AircraftSnapshot {
         this.health = health;
         this.posX = posX;
         this.posZ = posZ;
+        this.velX = velX;
+        this.velY = velY;
+        this.velZ = velZ;
     }
 
     public int getEntityId() {
@@ -82,6 +89,18 @@ public class AircraftSnapshot {
         return posZ;
     }
 
+    public double getVelX() {
+        return velX;
+    }
+
+    public double getVelY() {
+        return velY;
+    }
+
+    public double getVelZ() {
+        return velZ;
+    }
+
     public void writeToBuf(RegistryFriendlyByteBuf buf) {
         buf.writeInt(entityId);
         buf.writeUUID(uuid);
@@ -95,6 +114,9 @@ public class AircraftSnapshot {
         buf.writeFloat(health);
         buf.writeDouble(posX);
         buf.writeDouble(posZ);
+        buf.writeDouble(velX);
+        buf.writeDouble(velY);
+        buf.writeDouble(velZ);
     }
 
     public static AircraftSnapshot readFromBuf(RegistryFriendlyByteBuf buf) {
@@ -110,6 +132,9 @@ public class AircraftSnapshot {
         float health = buf.readFloat();
         double posX = buf.readDouble();
         double posZ = buf.readDouble();
-        return new AircraftSnapshot(entityId, uuid, name, typeId, distance, altitude, speed, enginePower, fuel, health, posX, posZ);
+        double velX = buf.readDouble();
+        double velY = buf.readDouble();
+        double velZ = buf.readDouble();
+        return new AircraftSnapshot(entityId, uuid, name, typeId, distance, altitude, speed, enginePower, fuel, health, posX, posZ, velX, velY, velZ);
     }
 }

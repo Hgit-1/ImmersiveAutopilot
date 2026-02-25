@@ -61,7 +61,8 @@ public class S2CAircraftList extends Message {
     public static AircraftSnapshot buildSnapshot(VehicleEntity vehicle, Vec3 center) {
         double distance = vehicle.position().distanceTo(center);
         double altitude = vehicle.getY();
-        double speed = vehicle.getDeltaMovement().length();
+        Vec3 velocity = vehicle.getDeltaMovement();
+        double speed = velocity.length();
         float enginePower = 0.0f;
         float fuel = 0.0f;
         if (vehicle instanceof EngineVehicle engineVehicle) {
@@ -70,7 +71,8 @@ public class S2CAircraftList extends Message {
         }
         ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(vehicle.getType());
         String name = vehicle.getDisplayName().getString();
-        return new AircraftSnapshot(vehicle.getId(), vehicle.getUUID(), name, typeId, distance, altitude, speed, enginePower, fuel, vehicle.getHealth(), vehicle.getX(), vehicle.getZ());
+        return new AircraftSnapshot(vehicle.getId(), vehicle.getUUID(), name, typeId, distance, altitude, speed, enginePower, fuel,
+                vehicle.getHealth(), vehicle.getX(), vehicle.getZ(), velocity.x, velocity.y, velocity.z);
     }
 
     @Override
