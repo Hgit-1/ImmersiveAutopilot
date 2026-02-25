@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-@EventBusSubscriber(modid = ImmersiveAutopilot.MOD_ID, bus = EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = ImmersiveAutopilot.MOD_ID, value = Dist.CLIENT)
 public final class AutoRouteScreenOverlay {
     private static final int PANEL_WIDTH = 120;
     private static final int LINE_HEIGHT = 18;
@@ -78,9 +78,9 @@ public final class AutoRouteScreenOverlay {
             int fieldWidth = PANEL_WIDTH - 12;
             for (int i = 0; i < LINE_COUNT; i++) {
                 int y = panelY + 20 + i * LINE_HEIGHT;
-                EditBox field = new EditBox(screen.getFont(), panelX + 6, y, fieldWidth, 16, Component.literal(""));
+                EditBox field = new EditBox(screen.getMinecraft().font, panelX + 6, y, fieldWidth, 16, Component.literal(""));
                 field.setMaxLength(64);
-                event.addRenderableWidget(field);
+                event.addListener(field);
                 fields.add(field);
             }
 
@@ -88,13 +88,13 @@ public final class AutoRouteScreenOverlay {
                     button -> applyRoutes())
                 .bounds(panelX + 6, panelY + panelHeight - 22, fieldWidth, 18)
                 .build();
-            event.addRenderableWidget(applyButton);
+            event.addListener(applyButton);
         }
 
         private void renderPanel(GuiGraphics graphics) {
             graphics.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + panelHeight, 0xFF101215);
             graphics.fill(panelX + 2, panelY + 2, panelX + PANEL_WIDTH - 2, panelY + panelHeight - 2, 0xFF1B1F26);
-            graphics.drawString(screen.getFont(), Component.translatable("screen.immersive_autopilot.auto_routes_title"),
+            graphics.drawString(screen.getMinecraft().font, Component.translatable("screen.immersive_autopilot.auto_routes_title"),
                     panelX + 6, panelY + 6, 0xFFFFFFFF, false);
         }
 
