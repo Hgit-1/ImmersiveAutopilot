@@ -57,5 +57,7 @@
   "screen.immersive_autopilot.auto_routes_apply": "Apply",
   "screen.immersive_autopilot.auto_routes_clear": "Clear",
   "item.immersive_autopilot.radar_range_sensor": "Radar Range Sensor",
-  "item.immersive_autopilot.radar_ident_module": "Radar Identification Module"
+  "item.immersive_autopilot.radar_ident_module": "Radar Identification Module",
+  "item.immersive_autopilot.autopilot_unit": "Autopilot Unit",
+  "item.immersive_autopilot.tower_auto_support": "Tower Auto Support"
 }

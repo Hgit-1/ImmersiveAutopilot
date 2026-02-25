@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IRI",
+    "LSL",
+    "IRI"
+  ],
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "R": { "item": "minecraft:redstone" },
+    "L": { "item": "immersive_autopilot:radar_lens" },
+    "S": { "item": "immersive_autopilot:signal_amplifier" }
+  },
+  "result": {
+    "item": "immersive_autopilot:autopilot_unit"
+  }
+}

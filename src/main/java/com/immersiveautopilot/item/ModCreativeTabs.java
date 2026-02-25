@@ -22,6 +22,8 @@ public final class ModCreativeTabs {
             event.accept(ModItems.SIGNAL_AMPLIFIER.get());
             event.accept(ModItems.RADAR_RANGE_SENSOR.get());
             event.accept(ModItems.RADAR_IDENT_MODULE.get());
+            event.accept(ModItems.AUTOPILOT_UNIT.get());
+            event.accept(ModItems.TOWER_AUTO_SUPPORT.get());
         }
     }
 }

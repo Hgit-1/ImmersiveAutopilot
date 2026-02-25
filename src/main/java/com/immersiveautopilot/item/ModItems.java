@@ -23,6 +23,10 @@ public final class ModItems {
             () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> RADAR_IDENT_MODULE = ITEMS.register("radar_ident_module",
             () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> AUTOPILOT_UNIT = ITEMS.register("autopilot_unit",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> TOWER_AUTO_SUPPORT = ITEMS.register("tower_auto_support",
+            () -> new Item(new Item.Properties()));
 
     private ModItems() {
     }

@@ -57,5 +57,7 @@
   "screen.immersive_autopilot.auto_routes_apply": "应用",
   "screen.immersive_autopilot.auto_routes_clear": "清空",
   "item.immersive_autopilot.radar_range_sensor": "雷达范围感知器",
-  "item.immersive_autopilot.radar_ident_module": "雷达识别模块"
+  "item.immersive_autopilot.radar_ident_module": "雷达识别模块",
+  "item.immersive_autopilot.autopilot_unit": "自动驾驶仪",
+  "item.immersive_autopilot.tower_auto_support": "塔台完全自动支持"
 }
