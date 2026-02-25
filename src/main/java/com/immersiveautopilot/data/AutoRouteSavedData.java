@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
@@ -20,7 +21,10 @@ public class AutoRouteSavedData extends SavedData {
     private final Map<UUID, List<Entry>> routes = new HashMap<>();
 
     public static AutoRouteSavedData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(AutoRouteSavedData::load, AutoRouteSavedData::new, DATA_NAME);
+        return level.getDataStorage().computeIfAbsent(
+            new SavedData.Factory<>(AutoRouteSavedData::new, AutoRouteSavedData::load),
+            DATA_NAME
+        );
     }
 
     public List<Entry> getRoutes(UUID vehicleId) {
@@ -37,7 +41,7 @@ public class AutoRouteSavedData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
         ListTag list = new ListTag();
         for (Map.Entry<UUID, List<Entry>> entry : routes.entrySet()) {
             CompoundTag vehicleTag = new CompoundTag();
@@ -58,7 +62,7 @@ public class AutoRouteSavedData extends SavedData {
         return tag;
     }
 
-    public static AutoRouteSavedData load(CompoundTag tag) {
+    public static AutoRouteSavedData load(CompoundTag tag, HolderLookup.Provider provider) {
         AutoRouteSavedData data = new AutoRouteSavedData();
         if (tag.contains("Vehicles", Tag.TAG_LIST)) {
             ListTag list = tag.getList("Vehicles", Tag.TAG_COMPOUND);
