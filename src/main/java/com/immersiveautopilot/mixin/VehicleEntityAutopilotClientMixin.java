@@ -66,7 +66,7 @@ public class VehicleEntityAutopilotClientMixin {
         double cross = forwardFlat.x * targetFlat.z - forwardFlat.z * targetFlat.x;
         double dot = forwardFlat.x * targetFlat.x + forwardFlat.z * targetFlat.z;
         double yawError = Math.atan2(cross, dot);
-        float movementX = (float) Mth.clamp(yawError / (Math.PI / 4.0), -1.0, 1.0);
+        float movementX = (float) Mth.clamp(-yawError / (Math.PI / 4.0), -1.0, 1.0);
 
         Vec3 targetNorm = toTarget.normalize();
         double desiredPitch = Math.asin(Mth.clamp(targetNorm.y, -1.0, 1.0));
@@ -88,8 +88,13 @@ public class VehicleEntityAutopilotClientMixin {
         }
 
         if (vehicle.onGround() && toTarget.y > 2.0) {
-            movementY = 1.0f;
-            movementZ = Math.min(movementZ, -0.6f);
+            double speed = vehicle.getDeltaMovement().length();
+            movementY = Math.max(movementY, 1.0f);
+            if (speed > 0.25) {
+                movementZ = Math.min(movementZ, -0.8f);
+            } else {
+                movementZ = Math.max(movementZ, -0.2f);
+            }
         }
 
         vehicle.setInputs(movementX, movementY, movementZ);
