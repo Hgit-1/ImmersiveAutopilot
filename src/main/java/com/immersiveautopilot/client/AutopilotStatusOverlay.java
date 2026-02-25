@@ -2,6 +2,7 @@ package com.immersiveautopilot.client;
 
 import com.immersiveautopilot.ImmersiveAutopilot;
 import com.immersiveautopilot.autopilot.AutopilotSupport;
+import com.immersiveautopilot.client.ClientRouteGuidance;
 import immersive_aircraft.entity.VehicleEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -18,6 +19,7 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 @EventBusSubscriber(modid = ImmersiveAutopilot.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class AutopilotStatusOverlay {
     private static final int COLOR_AUTOPILOT = 0xFFFFD24A;
+    private static final int COLOR_WARN = 0xFFFFA142;
     private static final int COLOR_ALERT = 0xFFFF4040;
     private static final double TERRAIN_CHECK_DISTANCE = 16.0;
 
@@ -40,8 +42,17 @@ public final class AutopilotStatusOverlay {
 
         int line = 0;
         if (AutopilotSupport.isAutopilotEnabled(vehicle)) {
-            Component text = Component.translatable("hud.immersive_autopilot.autopilot_on");
-            drawCentered(graphics, mc, text, baseY + line * (mc.font.lineHeight + 2), COLOR_AUTOPILOT);
+            Component text;
+            int color = COLOR_AUTOPILOT;
+            if (ClientRouteGuidance.isInAirspace() && ClientRouteGuidance.isCompletedInAirspace()) {
+                text = Component.translatable("hud.immersive_autopilot.autopilot_complete");
+            } else if (!ClientRouteGuidance.isInAirspace() || !ClientRouteGuidance.hasActiveRoute()) {
+                text = Component.translatable("hud.immersive_autopilot.autopilot_no_service");
+                color = COLOR_WARN;
+            } else {
+                text = Component.translatable("hud.immersive_autopilot.autopilot_on");
+            }
+            drawCentered(graphics, mc, text, baseY + line * (mc.font.lineHeight + 2), color);
             line++;
         }
 

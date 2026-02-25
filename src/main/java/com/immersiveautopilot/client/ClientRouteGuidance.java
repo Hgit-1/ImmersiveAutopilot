@@ -30,6 +30,9 @@ public final class ClientRouteGuidance {
     private static int completedCount = 0;
     private static String primaryLabel = "";
     private static String backupLabel = "";
+    private static boolean awaitingChoice = false;
+    private static int pendingVehicleId = -1;
+    private static List<AutoRouteClient.Entry> pendingRoutes = List.of();
 
     private ClientRouteGuidance() {
     }
@@ -48,6 +51,9 @@ public final class ClientRouteGuidance {
         inAirspace = false;
         completedInAirspace = false;
         activeVehicleId = -1;
+        awaitingChoice = false;
+        pendingVehicleId = -1;
+        pendingRoutes = List.of();
     }
 
     public static boolean shouldSuppressOffers(int vehicleId) {
@@ -134,11 +140,43 @@ public final class ClientRouteGuidance {
         }
     }
 
+    public static void requestRouteChoice(int vehicleId, List<AutoRouteClient.Entry> entries) {
+        if (!inAirspace) {
+            return;
+        }
+        if (entries == null || entries.isEmpty()) {
+            return;
+        }
+        awaitingChoice = true;
+        pendingVehicleId = vehicleId;
+        pendingRoutes = new ArrayList<>(entries);
+        Minecraft.getInstance().setScreen(new com.immersiveautopilot.screen.AutoRouteChoiceScreen(vehicleId, pendingRoutes));
+    }
+
+    public static void acceptChosenRoute(int vehicleId, String name, String operatorName) {
+        awaitingChoice = false;
+        pendingVehicleId = -1;
+        pendingRoutes = List.of();
+        AutoRouteClient.acceptPending(vehicleId, name, operatorName);
+    }
+
     public static boolean isActiveFor(int vehicleId) {
         if (!inAirspace || completedInAirspace || active == null) {
             return false;
         }
         return activeVehicleId == -1 || activeVehicleId == vehicleId;
+    }
+
+    public static boolean isInAirspace() {
+        return inAirspace;
+    }
+
+    public static boolean isCompletedInAirspace() {
+        return completedInAirspace;
+    }
+
+    public static boolean hasActiveRoute() {
+        return active != null;
     }
 
     public static RouteWaypoint getCurrentTarget() {

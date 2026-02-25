@@ -18,6 +18,11 @@ public final class AutoRouteClient {
     private static final Map<Integer, Integer> INDICES = new ConcurrentHashMap<>();
     private static final Map<Integer, Boolean> ACCEPTED = new ConcurrentHashMap<>();
     private static final Map<Integer, Long> LAST_REQUEST = new ConcurrentHashMap<>();
+    private static final Map<Integer, List<Entry>> PENDING = new ConcurrentHashMap<>();
+    private static final Map<Integer, List<OfferCandidate>> OFFERS = new ConcurrentHashMap<>();
+
+    public record OfferCandidate(String operatorName, RouteEntry entry) {
+    }
 
     private AutoRouteClient() {
     }
@@ -26,6 +31,8 @@ public final class AutoRouteClient {
         ROUTES.put(vehicleId, entries == null ? List.of() : new ArrayList<>(entries));
         INDICES.put(vehicleId, 0);
         ACCEPTED.put(vehicleId, false);
+        PENDING.remove(vehicleId);
+        OFFERS.remove(vehicleId);
     }
 
     public static void requestRoutes(int vehicleId) {
@@ -48,28 +55,6 @@ public final class AutoRouteClient {
     }
 
     public static boolean tryAutoAccept(int vehicleId, List<RouteEntry> offers) {
-        List<Entry> entries = ROUTES.get(vehicleId);
-        if (entries == null || entries.isEmpty()) {
-            return false;
-        }
-        int index = INDICES.getOrDefault(vehicleId, 0);
-        if (index < 0 || index >= entries.size()) {
-            return false;
-        }
-        String desired = entries.get(index).routeName();
-        if (desired == null || desired.isBlank()) {
-            return false;
-        }
-        for (RouteEntry entry : offers) {
-            if (desired.equals(entry.name())) {
-                ClientRouteCache.setRoutes(vehicleId, entry.program(), null);
-                String label = entries.get(index).label();
-                ClientRouteGuidance.acceptRoutes(vehicleId, entry.program(), null, label == null ? "" : label, "");
-                NetworkHandler.sendToServer(new C2SPilotRouteDecision(vehicleId, true, entry.name(), ""));
-                ACCEPTED.put(vehicleId, true);
-                return true;
-            }
-        }
         return false;
     }
 
@@ -79,17 +64,110 @@ public final class AutoRouteClient {
     }
 
     public static void onAirspaceExit(int vehicleId) {
-        if (!Boolean.TRUE.equals(ACCEPTED.get(vehicleId))) {
+        ACCEPTED.put(vehicleId, false);
+        requestRoutes(vehicleId);
+    }
+
+    public static List<Entry> getPending(int vehicleId) {
+        return PENDING.getOrDefault(vehicleId, Collections.emptyList());
+    }
+
+    public static void acceptPending(int vehicleId, String routeName, String operatorName) {
+        if (routeName == null || routeName.isBlank()) {
             return;
         }
-        int index = INDICES.getOrDefault(vehicleId, 0);
         List<Entry> entries = ROUTES.get(vehicleId);
         if (entries == null || entries.isEmpty()) {
             return;
         }
-        if (index < entries.size() - 1) {
-            INDICES.put(vehicleId, index + 1);
+        int index = -1;
+        for (int i = 0; i < entries.size(); i++) {
+            if (routeName.equals(entries.get(i).routeName())) {
+                index = i;
+                break;
+            }
         }
-        ACCEPTED.put(vehicleId, false);
+        if (index < 0) {
+            return;
+        }
+        List<OfferCandidate> offers = OFFERS.getOrDefault(vehicleId, Collections.emptyList());
+        for (OfferCandidate candidate : offers) {
+            if (routeName.equals(candidate.entry().name())
+                    && (operatorName == null || operatorName.isBlank() || operatorName.equals(candidate.operatorName()))) {
+                acceptOffer(vehicleId, candidate, index);
+                PENDING.remove(vehicleId);
+                return;
+            }
+        }
+    }
+
+    public static void registerOffer(int vehicleId, String operatorName, List<RouteEntry> offers) {
+        List<OfferCandidate> list = new ArrayList<>(OFFERS.getOrDefault(vehicleId, List.of()));
+        for (RouteEntry entry : offers) {
+            list.add(new OfferCandidate(operatorName == null ? "" : operatorName, entry));
+        }
+        OFFERS.put(vehicleId, list);
+        evaluateOffers(vehicleId);
+    }
+
+    public static List<OfferCandidate> getOfferCandidates(int vehicleId) {
+        return OFFERS.getOrDefault(vehicleId, Collections.emptyList());
+    }
+
+    public static boolean isAccepted(int vehicleId) {
+        return Boolean.TRUE.equals(ACCEPTED.get(vehicleId));
+    }
+
+    private static void evaluateOffers(int vehicleId) {
+        List<Entry> entries = ROUTES.get(vehicleId);
+        if (entries == null || entries.isEmpty()) {
+            return;
+        }
+        List<OfferCandidate> offers = OFFERS.getOrDefault(vehicleId, Collections.emptyList());
+        if (offers.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < entries.size(); i++) {
+            String desired = entries.get(i).routeName();
+            if (desired == null || desired.isBlank()) {
+                continue;
+            }
+            List<OfferCandidate> matches = new ArrayList<>();
+            for (OfferCandidate candidate : offers) {
+                if (desired.equals(candidate.entry().name())) {
+                    matches.add(candidate);
+                }
+            }
+            if (matches.isEmpty()) {
+                continue;
+            }
+            if (matches.size() == 1) {
+                acceptOffer(vehicleId, matches.get(0), i);
+                return;
+            }
+            List<Entry> pending = new ArrayList<>();
+            for (OfferCandidate match : matches) {
+                pending.add(new Entry(match.entry().name(), match.operatorName()));
+            }
+            PENDING.put(vehicleId, pending);
+            ClientRouteGuidance.requestRouteChoice(vehicleId, pending);
+            return;
+        }
+    }
+
+    private static void acceptOffer(int vehicleId, OfferCandidate candidate, int index) {
+        RouteEntry entry = candidate.entry();
+        INDICES.put(vehicleId, index);
+
+        RouteProgram current = ClientRouteCache.getPrimary(vehicleId);
+        RouteProgram backup = current != null && current != entry.program() ? current : null;
+        ClientRouteCache.setRoutes(vehicleId, entry.program(), backup);
+
+        String label = ROUTES.getOrDefault(vehicleId, List.of()).get(index).label();
+        ClientRouteGuidance.acceptRoutes(vehicleId, entry.program(), backup, label == null ? "" : label, "");
+        NetworkHandler.sendToServer(new C2SPilotRouteDecision(vehicleId, true, entry.name(), ""));
+        ACCEPTED.put(vehicleId, true);
+        OFFERS.remove(vehicleId);
     }
 }

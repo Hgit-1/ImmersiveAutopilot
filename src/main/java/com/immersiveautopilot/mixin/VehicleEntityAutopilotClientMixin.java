@@ -42,6 +42,10 @@ public class VehicleEntityAutopilotClientMixin {
             return;
         }
         if (!ClientRouteGuidance.isActiveFor(vehicle.getId())) {
+            if (ClientRouteGuidance.isInAirspace() || !ClientRouteGuidance.hasActiveRoute()) {
+                vehicle.setInputs(0.0f, 0.0f, 0.0f);
+                vehicle.setXRot(Mth.lerp(0.1f, vehicle.getXRot(), 0.0f));
+            }
             return;
         }
         RouteWaypoint target = ClientRouteGuidance.getCurrentTarget();

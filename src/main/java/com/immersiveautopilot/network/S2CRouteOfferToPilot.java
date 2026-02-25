@@ -64,7 +64,8 @@ public class S2CRouteOfferToPilot extends Message {
             if (com.immersiveautopilot.client.ClientRouteGuidance.shouldSuppressOffers(vehicleId)) {
                 return;
             }
-            if (AutoRouteClient.tryAutoAccept(vehicleId, entries)) {
+            AutoRouteClient.registerOffer(vehicleId, operatorName, entries);
+            if (AutoRouteClient.isAccepted(vehicleId) || !AutoRouteClient.getPending(vehicleId).isEmpty()) {
                 return;
             }
             Minecraft.getInstance().setScreen(new RouteOfferScreen(vehicleId, operatorName, entries));
