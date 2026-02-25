@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import org.joml.Matrix4f;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -111,7 +112,7 @@ public final class RadarRangeOverlay {
         pose.popPose();
     }
 
-    private static void addQuadVertex(VertexConsumer consumer, com.mojang.math.Matrix4f matrix, float x, float y, float z,
+    private static void addQuadVertex(VertexConsumer consumer, Matrix4f matrix, float x, float y, float z,
                                       float u, float v, int r, int g, int b, int a) {
         consumer.addVertex(matrix, x, y, z)
                 .setColor(r, g, b, a)
