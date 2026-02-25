@@ -20,6 +20,8 @@ public final class ModNetwork {
         NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, C2SRequestAutoRoutes.TYPE, C2SRequestAutoRoutes.STREAM_CODEC);
         NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, C2SSetAutoRoutes.TYPE, C2SSetAutoRoutes.STREAM_CODEC);
         NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, S2CAutoRoutes.TYPE, S2CAutoRoutes.STREAM_CODEC);
+        NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, C2SToggleAutopilot.TYPE, C2SToggleAutopilot.STREAM_CODEC);
+        NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, S2CAutopilotState.TYPE, S2CAutopilotState.STREAM_CODEC);
 
         NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, C2SRequestTowerState.TYPE, C2SRequestTowerState.STREAM_CODEC);
         NetworkHandler.registerMessage(ImmersiveAutopilot.MOD_ID, S2CTowerState.TYPE, S2CTowerState.STREAM_CODEC);

@@ -4,9 +4,12 @@
   "package": "com.immersiveautopilot.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "VehicleEntityRouteMixin"
+    "VehicleEntityRouteMixin",
+    "VehicleEntityAutopilotStateMixin"
   ],
-  "client": [],
+  "client": [
+    "VehicleEntityAutopilotClientMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

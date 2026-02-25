@@ -134,6 +134,28 @@ public final class ClientRouteGuidance {
         }
     }
 
+    public static boolean isActiveFor(int vehicleId) {
+        if (!inAirspace || completedInAirspace || active == null) {
+            return false;
+        }
+        return activeVehicleId == -1 || activeVehicleId == vehicleId;
+    }
+
+    public static RouteWaypoint getCurrentTarget() {
+        if (active == null) {
+            return null;
+        }
+        List<RouteWaypoint> points = active.getWaypoints();
+        if (completedCount < 0 || completedCount >= points.size()) {
+            return null;
+        }
+        return points.get(completedCount);
+    }
+
+    public static int getActiveVehicleId() {
+        return activeVehicleId;
+    }
+
     public static void renderWorld(PoseStack pose, MultiBufferSource buffers, Vec3 camPos, Level level) {
         if (!inAirspace || completedInAirspace || active == null) {
             return;

@@ -14,5 +14,8 @@ public final class ClientRuntimeEvents {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         ClientRouteGuidance.tick();
+        while (AutopilotKeyBindings.TOGGLE_AUTOPILOT.consumeClick()) {
+            AutopilotToggleHandler.toggleAutopilot();
+        }
     }
 }
