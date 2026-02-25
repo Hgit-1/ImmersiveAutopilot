@@ -24,6 +24,10 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         super(menu, inventory, title);
         this.imageWidth = PANEL_WIDTH + PANEL_GAP + 176;
         this.imageHeight = 166;
+        this.titleLabelX = 8;
+        this.titleLabelY = 6;
+        this.inventoryLabelX = RadarMenu.BASE_X + 8;
+        this.inventoryLabelY = 72;
     }
 
     @Override

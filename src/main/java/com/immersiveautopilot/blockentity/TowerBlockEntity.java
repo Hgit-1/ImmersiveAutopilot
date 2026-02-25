@@ -209,6 +209,8 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
                 insideAirspace.put(vehicle.getUUID(), true);
             } else if (vehicle.getControllingPassenger() instanceof ServerPlayer pilot) {
                 sendRouteOfferIfNeeded(vehicle, pilot, entries, false);
+            } else {
+                activePilots.remove(vehicle.getUUID());
             }
         }
         insideAirspace.keySet().removeIf(uuid -> {
@@ -248,13 +250,13 @@ public class TowerBlockEntity extends BlockEntity implements MenuProvider {
         }
 
         if (entering || pilotChanged) {
+            immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
+                    new com.immersiveautopilot.network.S2CAirspaceState(vehicle.getId(), true), pilot);
             if (!entries.isEmpty()) {
                 RouteOfferManager.createOffer(pilotId, null, vehicle.getId(), entries, level.getGameTime());
                 immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
                         new S2CRouteOfferToPilot(vehicle.getId(), towerName, entries), pilot);
             }
-            immersive_aircraft.cobalt.network.NetworkHandler.sendToPlayer(
-                    new com.immersiveautopilot.network.S2CAirspaceState(vehicle.getId(), true), pilot);
             if (entering) {
                 String msg = formatText(autoRequestText);
                 if (!msg.isBlank()) {

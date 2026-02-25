@@ -22,7 +22,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @EventBusSubscriber(modid = ImmersiveAutopilot.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class RadarRangeOverlay {
@@ -58,34 +60,36 @@ public final class RadarRangeOverlay {
         VertexConsumer fill = buffers.getBuffer(RenderType.translucent());
 
         int step = 4;
-        int maxRange = 0;
+        Map<Long, Integer> counts = new HashMap<>();
         for (TowerBlockEntity tower : towers) {
-            maxRange = Math.max(maxRange, tower.getScanRange());
-        }
-        int radius = Math.max(1, maxRange);
-        int minX = player.blockPosition().getX() - radius;
-        int maxX = player.blockPosition().getX() + radius;
-        int minZ = player.blockPosition().getZ() - radius;
-        int maxZ = player.blockPosition().getZ() + radius;
-
-        for (int z = minZ; z <= maxZ; z += step) {
-            for (int x = minX; x <= maxX; x += step) {
-                int count = 0;
-                for (TowerBlockEntity tower : towers) {
+            int radius = Math.max(1, tower.getScanRange());
+            int minX = tower.getBlockPos().getX() - radius;
+            int maxX = tower.getBlockPos().getX() + radius;
+            int minZ = tower.getBlockPos().getZ() - radius;
+            int maxZ = tower.getBlockPos().getZ() + radius;
+            double radiusSq = radius * (double) radius;
+            for (int z = minZ; z <= maxZ; z += step) {
+                for (int x = minX; x <= maxX; x += step) {
                     double dx = x + 0.5 - tower.getBlockPos().getX() - 0.5;
                     double dz = z + 0.5 - tower.getBlockPos().getZ() - 0.5;
-                    if (dx * dx + dz * dz <= tower.getScanRange() * (double) tower.getScanRange()) {
-                        count++;
+                    if (dx * dx + dz * dz > radiusSq) {
+                        continue;
                     }
+                    long key = (((long) x) << 32) ^ (z & 0xffffffffL);
+                    counts.merge(key, 1, Integer::sum);
                 }
-                if (count == 0) {
-                    continue;
-                }
-                int color = count >= 2 ? GREEN : GOLD;
-                int y = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,
-                        new net.minecraft.core.BlockPos(x, 0, z)).getY();
-                drawQuad(fill, pose, camPos, x, y, z, step, color);
             }
+        }
+
+        for (Map.Entry<Long, Integer> entry : counts.entrySet()) {
+            int count = entry.getValue();
+            int color = count >= 2 ? GREEN : GOLD;
+            long key = entry.getKey();
+            int x = (int) (key >> 32);
+            int z = (int) key;
+            int y = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,
+                    new net.minecraft.core.BlockPos(x, 0, z)).getY();
+            drawQuad(fill, pose, camPos, x, y, z, step, color);
         }
 
         VertexConsumer lines = buffers.getBuffer(RenderType.lines());

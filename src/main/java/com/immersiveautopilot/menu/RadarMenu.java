@@ -29,14 +29,14 @@ public class RadarMenu extends AbstractContainerMenu {
         this.pos = radar.getBlockPos();
 
         int startX = BASE_X + 62;
-        int startY = 20;
+        int startY = 17;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 addSlot(new Slot(radar, col + row * 3, startX + col * 18, startY + row * 18));
             }
         }
 
-        int invY = 94;
+        int invY = 84;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 addSlot(new Slot(inventory, col + row * 9 + 9, BASE_X + 8 + col * 18, invY + row * 18));
