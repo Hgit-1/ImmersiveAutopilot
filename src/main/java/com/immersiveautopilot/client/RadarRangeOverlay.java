@@ -8,6 +8,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -102,11 +104,21 @@ public final class RadarRangeOverlay {
         pose.pushPose();
         pose.translate(-camPos.x, -camPos.y, -camPos.z);
         var matrix = pose.last().pose();
-        consumer.addVertex(matrix, x, y + 0.02f, z).setColor(r, g, b, a);
-        consumer.addVertex(matrix, x + size, y + 0.02f, z).setColor(r, g, b, a);
-        consumer.addVertex(matrix, x + size, y + 0.02f, z + size).setColor(r, g, b, a);
-        consumer.addVertex(matrix, x, y + 0.02f, z + size).setColor(r, g, b, a);
+        addQuadVertex(consumer, matrix, x, y + 0.02f, z, 0f, 0f, r, g, b, a);
+        addQuadVertex(consumer, matrix, x + size, y + 0.02f, z, 1f, 0f, r, g, b, a);
+        addQuadVertex(consumer, matrix, x + size, y + 0.02f, z + size, 1f, 1f, r, g, b, a);
+        addQuadVertex(consumer, matrix, x, y + 0.02f, z + size, 0f, 1f, r, g, b, a);
         pose.popPose();
+    }
+
+    private static void addQuadVertex(VertexConsumer consumer, com.mojang.math.Matrix4f matrix, float x, float y, float z,
+                                      float u, float v, int r, int g, int b, int a) {
+        consumer.addVertex(matrix, x, y, z)
+                .setColor(r, g, b, a)
+                .setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(LightTexture.FULL_BRIGHT)
+                .setNormal(0f, 1f, 0f);
     }
 
     private static void drawCircle(VertexConsumer consumer, PoseStack pose, Vec3 camPos, double cx, double cy, double cz, double radius, int color) {
