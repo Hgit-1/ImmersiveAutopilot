@@ -2,6 +2,7 @@ package com.immersiveautopilot.client;
 
 import com.immersiveautopilot.network.C2SPilotRouteDecision;
 import com.immersiveautopilot.route.RouteEntry;
+import com.immersiveautopilot.route.RouteProgram;
 import immersive_aircraft.cobalt.network.NetworkHandler;
 
 import java.util.ArrayList;
