@@ -869,6 +869,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
         int width = leftListWidth;
         int height = 16;
         int deleteWidth = 16;
+        int deleteGap = 6;
         for (String name : presetNames) {
             if (name == null || name.isBlank()) {
                 continue;
@@ -883,7 +884,7 @@ public class TowerScreen extends AbstractContainerScreen<TowerMenu> {
             int labelColor = pendingDelete ? 0xFFFF4040 : 0xFFFFFFFF;
             graphics.drawString(font, label, listX + 4, drawY + 4, labelColor, false);
 
-            int deleteX = listX + width - deleteWidth;
+            int deleteX = listX + width + deleteGap;
             int deleteY = drawY;
             graphics.fill(deleteX, deleteY, deleteX + deleteWidth, deleteY + height, 0xFF3A2C2C);
             graphics.drawString(font, "X", deleteX + 5, deleteY + 4, 0xFFFFFFFF, false);
