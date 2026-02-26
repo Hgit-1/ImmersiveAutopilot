@@ -7,6 +7,7 @@ modId="${mod_id}"
 version="${version}"
 displayName="${mod_name}"
 logoFile="logo.png"
+displayURL="https://github.com/Hgit-1/ImmersiveAutopilot"
 credits="Codex, Xaero Map (Auto guiding info provider), Immersive Aircraft, Man of Many Planes (Immersive Aircraft's addon)"
 authors="Halpha1st | MDFZ Minecraft Team"
 description='''Autopilot towers, radar coverage, and route guidance for Immersive Aircraft.'''
