@@ -12,7 +12,7 @@
     "L": { "item": "immersive_autopilot:radar_lens" }
   },
   "result": {
-    "id": "immersive_autopilot:radar_range_sensor"
+    "item": "immersive_autopilot:radar_range_sensor"
   }
 }
 

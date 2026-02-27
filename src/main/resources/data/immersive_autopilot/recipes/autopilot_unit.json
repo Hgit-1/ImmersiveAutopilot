@@ -12,7 +12,7 @@
     "S": { "item": "immersive_autopilot:signal_amplifier" }
   },
   "result": {
-    "id": "immersive_autopilot:autopilot_unit"
+    "item": "immersive_autopilot:autopilot_unit"
   }
 }
 

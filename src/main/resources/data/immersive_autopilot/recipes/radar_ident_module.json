@@ -11,7 +11,7 @@
     "L": { "item": "immersive_autopilot:radar_lens" }
   },
   "result": {
-    "id": "immersive_autopilot:radar_ident_module"
+    "item": "immersive_autopilot:radar_ident_module"
   }
 }
 

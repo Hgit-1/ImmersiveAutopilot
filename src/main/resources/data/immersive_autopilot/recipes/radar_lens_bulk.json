@@ -9,7 +9,7 @@
     { "item": "minecraft:amethyst_shard" }
   ],
   "result": {
-    "id": "immersive_autopilot:radar_lens",
+    "item": "immersive_autopilot:radar_lens",
     "count": 2
   }
 }

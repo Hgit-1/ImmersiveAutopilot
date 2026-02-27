@@ -11,7 +11,7 @@
     "G": { "item": "minecraft:glass" }
   },
   "result": {
-    "id": "immersive_autopilot:tower"
+    "item": "immersive_autopilot:tower"
   }
 }
 
