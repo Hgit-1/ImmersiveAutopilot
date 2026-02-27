@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IRI",
+    "GRG",
+    "IRI"
+  ],
+  "key": {
+    "I": [
+      {
+        "item": "minecraft:iron_ingot"
+      }
+    ],
+    "R": [
+      {
+        "item": "minecraft:redstone"
+      }
+    ],
+    "G": [
+      {
+        "item": "minecraft:glass"
+      }
+    ]
+  },
+  "result": {
+    "id": "immersive_autopilot:tower"
+  }
+}

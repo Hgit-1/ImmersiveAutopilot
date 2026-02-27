@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ASA",
+    "RLR",
+    "ASA"
+  ],
+  "key": {
+    "A": [
+      {
+        "item": "immersive_autopilot:autopilot_unit"
+      }
+    ],
+    "S": [
+      {
+        "item": "immersive_autopilot:signal_amplifier"
+      }
+    ],
+    "R": [
+      {
+        "item": "minecraft:redstone"
+      }
+    ],
+    "L": [
+      {
+        "item": "immersive_autopilot:radar_range_sensor"
+      }
+    ]
+  },
+  "result": {
+    "id": "immersive_autopilot:tower_auto_support"
+  }
+}

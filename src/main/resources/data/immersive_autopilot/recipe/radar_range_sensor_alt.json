@@ -1,0 +1,38 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IRI",
+    "OLO",
+    "IGI"
+  ],
+  "key": {
+    "I": [
+      {
+        "item": "minecraft:iron_ingot"
+      }
+    ],
+    "R": [
+      {
+        "item": "minecraft:redstone"
+      }
+    ],
+    "O": [
+      {
+        "item": "minecraft:observer"
+      }
+    ],
+    "L": [
+      {
+        "item": "immersive_autopilot:radar_lens"
+      }
+    ],
+    "G": [
+      {
+        "item": "minecraft:gold_ingot"
+      }
+    ]
+  },
+  "result": {
+    "id": "immersive_autopilot:radar_range_sensor"
+  }
+}
