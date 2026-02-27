@@ -1,9 +1,6 @@
 package com.immersiveautopilot.network;
 
-import com.immersiveautopilot.client.ClientRouteGuidance;
-import com.immersiveautopilot.client.AutoRouteClient;
 import immersive_aircraft.cobalt.network.Message;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -35,19 +32,19 @@ public class S2CAirspaceState extends Message {
 
     @Override
     public void receiveClient() {
-        Minecraft.getInstance().execute(() -> {
-            if (inAirspace) {
-                ClientRouteGuidance.onAirspaceEnter(vehicleId);
-                AutoRouteClient.onAirspaceEnter(vehicleId);
-            } else {
-                ClientRouteGuidance.onAirspaceExit(vehicleId);
-                AutoRouteClient.onAirspaceExit(vehicleId);
-            }
-        });
+        ClientSideExecutor.run("handleAirspaceState", S2CAirspaceState.class, this);
     }
 
     @Override
     public CustomPacketPayload.Type<S2CAirspaceState> type() {
         return TYPE;
+    }
+
+    public int getVehicleId() {
+        return vehicleId;
+    }
+
+    public boolean isInAirspace() {
+        return inAirspace;
     }
 }

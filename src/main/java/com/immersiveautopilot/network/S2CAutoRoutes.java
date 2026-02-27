@@ -1,10 +1,8 @@
 package com.immersiveautopilot.network;
 
-import com.immersiveautopilot.client.AutoRouteClient;
 import com.immersiveautopilot.data.AutoRouteSavedData;
 import immersive_aircraft.cobalt.network.Message;
 import immersive_aircraft.entity.VehicleEntity;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -52,20 +50,24 @@ public class S2CAutoRoutes extends Message {
 
     @Override
     public void receiveClient() {
-        Minecraft.getInstance().execute(() -> {
-            List<AutoRouteClient.Entry> entries = new ArrayList<>();
-            for (int i = 0; i < names.size(); i++) {
-                String name = names.get(i);
-                String label = i < labels.size() ? labels.get(i) : "";
-                entries.add(new AutoRouteClient.Entry(name, label));
-            }
-            AutoRouteClient.setRoutes(vehicleId, entries);
-        });
+        ClientSideExecutor.run("handleAutoRoutes", S2CAutoRoutes.class, this);
     }
 
     @Override
     public CustomPacketPayload.Type<S2CAutoRoutes> type() {
         return TYPE;
+    }
+
+    public int getVehicleId() {
+        return vehicleId;
+    }
+
+    public List<String> getNames() {
+        return names;
+    }
+
+    public List<String> getLabels() {
+        return labels;
     }
 
     public static void sendToPlayer(ServerPlayer player, VehicleEntity vehicle, List<AutoRouteSavedData.Entry> entries) {

@@ -1,9 +1,6 @@
 package com.immersiveautopilot.network;
 
-import com.immersiveautopilot.autopilot.AutopilotSupport;
 import immersive_aircraft.cobalt.network.Message;
-import immersive_aircraft.entity.VehicleEntity;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -35,17 +32,19 @@ public class S2CAutopilotState extends Message {
 
     @Override
     public void receiveClient() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return;
-        }
-        if (mc.level.getEntity(vehicleId) instanceof VehicleEntity vehicle) {
-            AutopilotSupport.setAutopilotEnabled(vehicle, enabled);
-        }
+        ClientSideExecutor.run("handleAutopilotState", S2CAutopilotState.class, this);
     }
 
     @Override
     public CustomPacketPayload.Type<S2CAutopilotState> type() {
         return TYPE;
+    }
+
+    public int getVehicleId() {
+        return vehicleId;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 }

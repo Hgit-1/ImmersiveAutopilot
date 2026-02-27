@@ -1,13 +1,11 @@
 package com.immersiveautopilot.network;
 
 import immersive_aircraft.cobalt.network.Message;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.UUID;
@@ -48,24 +46,15 @@ public class S2CRouteResultToOperator extends Message {
 
     @Override
     public void receiveClient() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) {
-            return;
-        }
-        Component message = switch (result) {
-            case SENT -> Component.translatable("message.immersive_autopilot.sent");
-            case ACCEPTED -> Component.translatable("message.immersive_autopilot.accepted");
-            case DECLINED -> Component.translatable("message.immersive_autopilot.declined");
-            case NO_PILOT -> Component.translatable("message.immersive_autopilot.no_pilot");
-            case INVALID_TARGET -> Component.translatable("message.immersive_autopilot.invalid_target");
-            case EXPIRED -> Component.translatable("message.immersive_autopilot.expired");
-            case NOT_PILOT -> Component.translatable("message.immersive_autopilot.not_pilot");
-        };
-        mc.player.displayClientMessage(message, true);
+        ClientSideExecutor.run("handleRouteResult", S2CRouteResultToOperator.class, this);
     }
 
     @Override
     public CustomPacketPayload.Type<S2CRouteResultToOperator> type() {
         return TYPE;
+    }
+
+    public RouteResultType getResult() {
+        return result;
     }
 }

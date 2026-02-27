@@ -2,6 +2,7 @@ package com.immersiveautopilot;
 
 import com.immersiveautopilot.block.ModBlocks;
 import com.immersiveautopilot.blockentity.ModBlockEntities;
+import com.immersiveautopilot.item.ModCreativeTabs;
 import com.immersiveautopilot.item.ModItems;
 import com.immersiveautopilot.menu.ModMenus;
 import com.immersiveautopilot.network.ModNetwork;
@@ -16,6 +17,7 @@ public class ImmersiveAutopilot {
     public ImmersiveAutopilot(IEventBus modBus) {
         ModBlocks.BLOCKS.register(modBus);
         ModItems.ITEMS.register(modBus);
+        ModCreativeTabs.TABS.register(modBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         ModMenus.MENUS.register(modBus);
 

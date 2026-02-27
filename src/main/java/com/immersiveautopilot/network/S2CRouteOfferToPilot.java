@@ -1,11 +1,6 @@
 package com.immersiveautopilot.network;
 
-import com.immersiveautopilot.route.RouteEntry;
-import com.immersiveautopilot.route.RouteProgram;
-import com.immersiveautopilot.client.AutoRouteClient;
-import com.immersiveautopilot.screen.RouteOfferScreen;
 import immersive_aircraft.cobalt.network.Message;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -13,6 +8,8 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.immersiveautopilot.route.RouteEntry;
+import com.immersiveautopilot.route.RouteProgram;
 
 public class S2CRouteOfferToPilot extends Message {
     public static final CustomPacketPayload.Type<S2CRouteOfferToPilot> TYPE = new CustomPacketPayload.Type<>(
@@ -54,26 +51,23 @@ public class S2CRouteOfferToPilot extends Message {
 
     @Override
     public void receiveClient() {
-        Minecraft.getInstance().execute(() -> {
-            if (Minecraft.getInstance().player == null) {
-                return;
-            }
-            if (Minecraft.getInstance().player.getVehicle() == null || Minecraft.getInstance().player.getVehicle().getId() != vehicleId) {
-                return;
-            }
-            if (com.immersiveautopilot.client.ClientRouteGuidance.shouldSuppressOffers(vehicleId)) {
-                return;
-            }
-            AutoRouteClient.registerOffer(vehicleId, operatorName, entries);
-            if (AutoRouteClient.isAccepted(vehicleId) || !AutoRouteClient.getPending(vehicleId).isEmpty()) {
-                return;
-            }
-            Minecraft.getInstance().setScreen(new RouteOfferScreen(vehicleId, operatorName, entries));
-        });
+        ClientSideExecutor.run("handleRouteOffer", S2CRouteOfferToPilot.class, this);
     }
 
     @Override
     public CustomPacketPayload.Type<S2CRouteOfferToPilot> type() {
         return TYPE;
+    }
+
+    public int getVehicleId() {
+        return vehicleId;
+    }
+
+    public String getOperatorName() {
+        return operatorName;
+    }
+
+    public List<RouteEntry> getEntries() {
+        return entries;
     }
 }
