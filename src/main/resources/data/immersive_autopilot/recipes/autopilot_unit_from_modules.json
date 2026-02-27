@@ -12,6 +12,8 @@
     "S": { "item": "immersive_autopilot:radar_range_sensor" }
   },
   "result": {
-    "item": "immersive_autopilot:autopilot_unit"
+    "id": "immersive_autopilot:autopilot_unit"
   }
 }
+
+

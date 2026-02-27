@@ -13,6 +13,8 @@
     "G": { "item": "minecraft:gold_ingot" }
   },
   "result": {
-    "item": "immersive_autopilot:radar_range_sensor"
+    "id": "immersive_autopilot:radar_range_sensor"
   }
 }
+
+

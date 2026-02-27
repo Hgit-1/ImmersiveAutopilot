@@ -12,6 +12,8 @@
     "S": { "item": "immersive_autopilot:signal_amplifier" }
   },
   "result": {
-    "item": "immersive_autopilot:autopilot_unit"
+    "id": "immersive_autopilot:autopilot_unit"
   }
 }
+
+

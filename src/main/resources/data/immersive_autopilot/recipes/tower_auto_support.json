@@ -12,6 +12,8 @@
     "L": { "item": "immersive_autopilot:radar_range_sensor" }
   },
   "result": {
-    "item": "immersive_autopilot:tower_auto_support"
+    "id": "immersive_autopilot:tower_auto_support"
   }
 }
+
+

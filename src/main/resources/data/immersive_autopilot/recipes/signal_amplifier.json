@@ -5,6 +5,8 @@
     { "item": "minecraft:redstone" }
   ],
   "result": {
-    "item": "immersive_autopilot:signal_amplifier"
+    "id": "immersive_autopilot:signal_amplifier"
   }
 }
+
+

@@ -12,6 +12,8 @@
     "C": { "item": "minecraft:comparator" }
   },
   "result": {
-    "item": "immersive_autopilot:radar_ident_module"
+    "id": "immersive_autopilot:radar_ident_module"
   }
 }
+
+

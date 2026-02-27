@@ -11,7 +11,9 @@
     "B": { "item": "minecraft:redstone_block" }
   },
   "result": {
-    "item": "immersive_autopilot:signal_amplifier",
+    "id": "immersive_autopilot:signal_amplifier",
     "count": 4
   }
 }
+
+

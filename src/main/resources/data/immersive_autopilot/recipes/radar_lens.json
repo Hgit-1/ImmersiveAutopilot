@@ -5,6 +5,8 @@
     { "item": "minecraft:amethyst_shard" }
   ],
   "result": {
-    "item": "immersive_autopilot:radar_lens"
+    "id": "immersive_autopilot:radar_lens"
   }
 }
+
+
